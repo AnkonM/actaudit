@@ -171,6 +171,8 @@ Separate from the EU AI Act tier, produce a secondary set of flags mapping extra
 
 Rationale for the human-oversight row's two triggers: documentation silence and an explicitly fully-autonomous pipeline are independent signals — either is sufficient to flag the concern.
 
+**Documentation gaps vs. fact-based flags (decided after Phase 4):** the `human_oversight_mentioned == false` and `transparency_mentioned == false` triggers fire on documentation *silence*, so they flag nearly every repo (including plain utility libraries). They stay exactly as specified above — per Section 9, missing documentation is a finding — but each `PrincipleFlag` carries `documentation_gap: bool` (true only when every trigger that fired is silence-based), and the dashboard presents documentation-gap flags in a separate "Documentation gaps" group from fact-based flags. A flag with both kinds of trigger (e.g. silence plus `decision_autonomy == fully_autonomous`) counts as fact-based.
+
 Each flagged principle should render in the dashboard with a one-line plain-language explanation of *why* it's flagged (which field triggered it), mirroring the EU AI Act "why this tier" transparency approach.
 
 ## 8. Dashboard / Output Specification
@@ -183,7 +185,7 @@ Single-page Streamlit app, one interaction flow:
    - **Risk tier badge** — large, color-coded: red (Prohibited/High-Risk), amber (Limited-Risk), green (Minimal-Risk)
    - **Extracted facts table** — every field from Section 5, with its value and evidence snippet where available; `extraction_confidence` shown prominently if `low`
    - **"Why this tier" panel** — ALWAYS renders `justification` and `provision` as two separate lines, for every rule (including the Rule 8 default). Some justification strings already restate the provision in prose; that's fine — the panel does not deduplicate, it just consistently shows both fields
-   - **Principle breakdown** — UNESCO/IEEE flags from Section 7, each with its one-line explanation
+   - **Principle breakdown** — UNESCO/IEEE flags from Section 7, each with its one-line explanation; fact-based flags and documentation-gap flags (`documentation_gap == true`) rendered as two separate groups (see Section 7)
    - **Raw source toggle** — collapsible view of the actual README/text that was analyzed, for verification
 4. **Example quick-picks** — 3–4 pre-loaded example repos spanning different tiers, as buttons, for a fast/reliable live demo that doesn't depend on live network conditions during presentation
 
@@ -264,8 +266,8 @@ actaudit/
   - **Robustness added during recording:** transport failures (timeouts, dropped connections) are wrapped as `ExtractionAPIError`, and the default client uses a 60s request timeout.
 
 ### Phase 4 — Principle Mapping
-- [ ] `principles.py`: implement Section 7's UNESCO/IEEE flag logic
-- [ ] Unit test alongside the rule engine tests
+- [x] `principles.py`: implement Section 7's UNESCO/IEEE flag logic (not first-match: every implicated principle is flagged; multi-trigger rows report each trigger that fired)
+- [x] Unit test alongside the rule engine tests (`tests/test_principles.py`)
 
 ### Phase 5 — Integration
 - [ ] Wire fetch → extract → rules → principles into a single callable pipeline function (keep this decoupled from Streamlit so it's independently testable)

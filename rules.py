@@ -101,8 +101,8 @@ RULES: list[Rule] = [
         number=4,
         # decision_autonomy is deliberately NOT a condition: Annex III membership makes a
         # system high-risk regardless of human oversight (blueprint 6.2 note).
-        # TODO(Phase 4): decision_autonomy now feeds the "human oversight" UNESCO/IEEE
-        # principle flag in principles.py instead of the tier — see blueprint Section 7.
+        # decision_autonomy feeds the "human oversight" UNESCO/IEEE principle flag in
+        # principles.py instead of the tier — see blueprint Section 7.
         condition=lambda f: f.deployment_domain in ANNEX_III_DOMAINS,
         trigger_fields=("deployment_domain",),
         tier=RiskTier.HIGH_RISK,
