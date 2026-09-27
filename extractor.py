@@ -26,7 +26,8 @@ from schema import (
     SchemaValidationError,
 )
 
-# Tried in order. Free-tier quotas are per model, so on a quota (429) or overload (503)
+# Tried in order. Free-tier quotas are per model, so on a quota (429), overload (503)
+# or server deadline (504)
 # error the next model is used (blueprint §10). gemini-flash-latest is excluded: it
 # shares gemini-3.8-flash's quota. Do not add gemini-2.5-flash.
 MODEL_CHAIN: tuple[str, ...] = (
@@ -36,7 +37,7 @@ MODEL_CHAIN: tuple[str, ...] = (
     "gemini-3.5-flash",
 )
 DEFAULT_MODEL = MODEL_CHAIN[0]
-FALLBACK_STATUS_CODES = frozenset({429, 503})
+FALLBACK_STATUS_CODES = frozenset({429, 503, 504})
 REQUEST_TIMEOUT_MS = 60_000
 MAX_INPUT_CHARS = 8000
 TRUNCATION_NOTICE = "\n\n(truncated)"

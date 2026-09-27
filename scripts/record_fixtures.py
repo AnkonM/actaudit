@@ -22,6 +22,7 @@ from extractor import (  # noqa: E402
     prepare_llm_text,
 )
 from github_fetch import fetch_readme  # noqa: E402
+from pipeline import clean_pasted_text  # noqa: E402
 
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
 
@@ -37,6 +38,29 @@ REPOS = [
     ("https://github.com/oarriaga/face_classification", "real-time emotion + gender classification", "biometric_id or other"),
     ("https://github.com/twitter/the-algorithm", "social media recommendation algorithm", "content_moderation or general_consumer"),
     ("https://github.com/psf/requests", "plain HTTP utility library", "other"),
+]
+
+# Fictional pasted-text descriptions, added so the quick-picks cover every tier
+# (no clean public repo exists for these). (fixture stem, label, expected rule, text)
+TEXT_EXAMPLES = [
+    (
+        "text__classroom_emotion_tracker",
+        "fictional: classroom emotion recognition",
+        "Prohibited, rule 3 (emotion_inference + education)",
+        "ClassPulse is a classroom analytics tool for schools. A webcam in each classroom "
+        "continuously analyses students' facial expressions to infer their emotions, such "
+        "as boredom, confusion and engagement, and sends teachers a live engagement score "
+        "for every pupil. Scores are logged to each student's record.",
+    ),
+    (
+        "text__tab_grouping_extension",
+        "fictional: on-device tab grouping browser extension",
+        "Minimal-Risk, rule 7 (general_consumer + no data + human_in_loop)",
+        "TidyTabs is a free browser extension for everyday users that suggests how to "
+        "group your open tabs by topic. It runs entirely on your device and collects no "
+        "personal data. It never acts on its own: every suggested grouping is shown to "
+        "you and is only applied when you click Accept.",
+    ),
 ]
 
 
@@ -57,6 +81,26 @@ def _extract_with_backoff(text: str, attempts: int = 4):
             time.sleep(wait)
 
 
+def _record(path: Path, source: dict, label: str, expected: str, text: str) -> None:
+    result = _extract_with_backoff(text)
+    _, truncated = prepare_llm_text(text)
+    facts_dict = {k: _jsonable(v) for k, v in asdict(result.facts).items()}
+    record = {
+        **source,
+        "label": label,
+        "expected_domain": expected,
+        "model": result.model,
+        "recorded_on": date.today().isoformat(),
+        "llm_input_truncated": truncated,
+        "raw_model_response": result.raw_response,
+        "extracted_facts": facts_dict,
+    }
+    path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n")
+    print(json.dumps({"fixture": path.stem, "label": label, "expected": expected,
+                      "model": result.model, "truncated": truncated,
+                      "facts": facts_dict}, ensure_ascii=False))
+
+
 def main() -> None:
     load_dotenv()
     FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
@@ -66,26 +110,16 @@ def main() -> None:
         if path.exists():
             print(f"skip {path.name} (already recorded)", file=sys.stderr)
             continue
-        result = _extract_with_backoff(readme.text)
-        facts = result.facts
-        _, truncated = prepare_llm_text(readme.text)
-        facts_dict = {k: _jsonable(v) for k, v in asdict(facts).items()}
-        record = {
-            "source_url": readme.source_url,
-            "label": label,
-            "expected_domain": expected,
-            "model": result.model,
-            "recorded_on": date.today().isoformat(),
-            "llm_input_truncated": truncated,
-            "readme_text": readme.text,
-            "raw_model_response": result.raw_response,
-            "extracted_facts": facts_dict,
-        }
-        path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n")
-        print(json.dumps({"repo": f"{readme.owner}/{readme.repo}", "label": label,
-                          "expected_domain": expected, "model": result.model,
-                          "truncated": truncated,
-                          "facts": facts_dict}, ensure_ascii=False))
+        source = {"source_url": readme.source_url, "readme_text": readme.text}
+        _record(path, source, label, expected, readme.text)
+    for stem, label, expected, raw_text in TEXT_EXAMPLES:
+        path = FIXTURE_DIR / f"{stem}.json"
+        if path.exists():
+            print(f"skip {path.name} (already recorded)", file=sys.stderr)
+            continue
+        text = clean_pasted_text(raw_text)  # same cleaning as the app's paste path
+        source = {"source_kind": "text", "source_text": text}
+        _record(path, source, label, expected, text)
 
 
 if __name__ == "__main__":

@@ -208,7 +208,7 @@ Single-page Streamlit app, one interaction flow:
 
 | Layer | Choice | Notes |
 |---|---|---|
-| LLM extraction | Gemini 3.8 Flash via `google-genai` SDK, free tier — confirmed working against the project's API key; `gemini-2.5-flash` is no longer available to new users, do not revert to it | JSON-mode / response-schema constrained output; automatic function calling explicitly disabled (see 5.1). **Model fallback chain:** `gemini-3.8-flash` → `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash`. Free-tier quotas are per model (observed: 20 requests/day for 3.8 Flash), so on HTTP 429 or 503 the next model is tried; other errors are not retried. A malformed-output retry stays on the model that answered. `gemini-flash-latest` is excluded (shares 3.8's quota). Every result and fixture records which model produced it. |
+| LLM extraction | Gemini 3.8 Flash via `google-genai` SDK, free tier — confirmed working against the project's API key; `gemini-2.5-flash` is no longer available to new users, do not revert to it | JSON-mode / response-schema constrained output; automatic function calling explicitly disabled (see 5.1). **Model fallback chain:** `gemini-3.8-flash` → `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash`. Free-tier quotas are per model (observed: 20 requests/day for 3.8 Flash), so on HTTP 429, 503 or 504 (server deadline exceeded, added in Phase 6 testing) the next model is tried; other errors are not retried. A malformed-output retry stays on the model that answered. `gemini-flash-latest` is excluded (shares 3.8's quota). Every result and fixture records which model produced it. |
 | Backend | Python 3.10+ | |
 | Rule engine | Plain Python, ordered list + dataclasses | No ML, no external deps beyond stdlib |
 | GitHub fetch | `requests` against raw.githubusercontent.com | No auth for public repos |
@@ -228,13 +228,14 @@ actaudit/
 ├── github_fetch.py            # README fetch logic + error handling
 ├── pipeline.py                # fetch → extract → rules → principles, Streamlit-free (Phase 5)
 ├── schema.py                   # Dataclass/TypedDict for extraction schema (Section 5)
-├── examples/                    # Pre-loaded demo repos (name → URL or cached text)
+├── examples/                    # Pre-loaded demo repos (name → fixture file)
 │   └── quick_picks.py
 ├── tests/
 │   ├── test_rules.py           # Unit tests: given a fact-set, assert correct tier
 │   ├── test_extractor.py        # Mocked LLM response → schema validation
 │   ├── test_principles.py       # Section 7 principle flags
 │   ├── test_pipeline.py         # Offline pipeline tests + opt-in live E2E (ACTAUDIT_LIVE=1)
+│   ├── test_app.py              # Offline Streamlit AppTest: quick-picks, results, error states
 │   └── fixtures/                 # Sample READMEs for offline rule-engine testing
 ├── scripts/
 │   ├── check_gemini.py        # Phase 0 manual API-key check
@@ -280,11 +281,12 @@ actaudit/
 - [x] End-to-end test: real GitHub URL in, full result object out — `tests/test_pipeline.py::test_live_github_url_end_to_end`, opt-in via `ACTAUDIT_LIVE=1` so the default suite stays offline and quota-free
 
 ### Phase 6 — Dashboard
-- [ ] `app.py`: input tabs, analyze button, loading state
-- [ ] Results rendering per Section 8 (badge, facts table, why-this-tier panel, principle breakdown)
-- [ ] Raw source toggle
-- [ ] Quick-pick example buttons (Section 8, point 4) — cache their extraction results so the demo doesn't depend on live API latency/availability during presentation
-- [ ] Error states per Section 8.1, rendered as friendly warnings not stack traces
+- [x] `app.py`: input tabs, analyze button, loading state — radio toggle "GitHub URL" / "Paste text", Analyze button, spinner; imports only `pipeline.py` (the sole UI↔backend interface, which re-exports the error types and quick-pick loader)
+- [x] Results rendering per Section 8 (badge, facts table, why-this-tier panel, principle breakdown) — color-coded badge; facts table with evidence column and a low-confidence warning; justification and provision always on two separate lines; principles split into "Flagged from stated facts" and "Documentation gaps"; source/model caption states whether the result is live or a recorded example
+- [x] Raw source toggle — expander with the full original text; if truncated, states "Model saw a truncated copy (8,000 of N characters)"
+- [x] Quick-pick example buttons (Section 8, point 4) — `examples/quick_picks.py` maps 4 labels to `tests/fixtures/` files; `pipeline.analyze_quick_pick()` rebuilds the result from recorded facts with no network or API call (rules and principles re-run on the recorded facts). Current picks cover High-Risk (rules 4, 5, 6) and Limited-Risk (rule 8) only — no Prohibited or Minimal-Risk fixture exists yet
+- [x] Error states per Section 8.1, rendered as friendly warnings not stack traces — one titled warning per exception type plus a generic fallback; covered by `tests/test_app.py` (offline AppTest)
+  - Found during testing: Gemini can return HTTP 504 (server deadline exceeded); added to the fallback codes (Section 10)
 
 ### Phase 7 — Polish & Deploy
 - [ ] Visual pass on the Streamlit UI (spacing, color consistency, badge styling)

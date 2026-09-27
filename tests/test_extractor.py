@@ -182,6 +182,12 @@ def test_falls_back_to_next_model_on_quota_and_overload():
     assert result.model == MODEL_CHAIN[2]
 
 
+def test_server_deadline_504_falls_back():
+    from extractor import MODEL_CHAIN, extract_with_details
+    client = FakeClient(_api_error(504), json.dumps(VALID))
+    assert extract_with_details("text", client=client).model == MODEL_CHAIN[1]
+
+
 def test_malformed_retry_stays_on_the_model_that_answered():
     from extractor import MODEL_CHAIN
     client = FakeClient(_api_error(429), "{bad", json.dumps(VALID))

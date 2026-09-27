@@ -1,0 +1,27 @@
+{
+  "source_kind": "text",
+  "source_text": "ClassPulse is a classroom analytics tool for schools. A webcam in each classroom continuously analyses students' facial expressions to infer their emotions, such as boredom, confusion and engagement, and sends teachers a live engagement score for every pupil. Scores are logged to each student's record.",
+  "label": "fictional: classroom emotion recognition",
+  "expected_domain": "Prohibited, rule 3 (emotion_inference + education)",
+  "model": "gemini-3.5-flash",
+  "recorded_on": "2026-09-27",
+  "llm_input_truncated": false,
+  "raw_model_response": "{\n  \"system_purpose\": \"A classroom analytics tool that analyses students' facial expressions to infer emotions and send live engagement scores to teachers.\",\n  \"deployment_domain\": \"education\",\n  \"data_sensitivity\": \"sensitive\",\n  \"decision_autonomy\": \"human_on_loop\",\n  \"affected_population\": \"vulnerable_groups\",\n  \"extraction_confidence\": \"high\",\n  \"biometric_use\": true,\n  \"emotion_inference\": true,\n  \"social_scoring\": false,\n  \"real_time_biometric_public\": false,\n  \"human_oversight_mentioned\": false,\n  \"transparency_mentioned\": false,\n  \"evidence_snippets\": {\n    \"system_purpose\": \"ClassPulse is a classroom analytics tool for schools. A webcam in each classroom continuously analyses students' facial expressions to infer their emotions\",\n    \"transparency_mentioned\": \"not mentioned in the text provided. Defaulting to false as per instructions and setting extraction_confidence to high based on other fields' clarity but keeping this false as it is absent from text. Actually, instructions say 'Omit fields left at their default' in evidence_snippets. Let me remove this key from evidence_snippets to follow instructions strictly: 'Omit fields left at their default.' Only include non-default fields in evidence_snippets. Non-default fields: system_purpose, deployment_domain, data_sensitivity, affected_population, biometric_use, emotion_inference, extraction_confidence. Let's clean up evidence_snippets to only contain these keys.\"\n  }\n}",
+  "extracted_facts": {
+    "system_purpose": "A classroom analytics tool that analyses students' facial expressions to infer emotions and send live engagement scores to teachers.",
+    "deployment_domain": "education",
+    "data_sensitivity": "sensitive",
+    "biometric_use": true,
+    "decision_autonomy": "human_on_loop",
+    "affected_population": "vulnerable_groups",
+    "emotion_inference": true,
+    "social_scoring": false,
+    "real_time_biometric_public": false,
+    "human_oversight_mentioned": false,
+    "transparency_mentioned": false,
+    "extraction_confidence": "high",
+    "evidence_snippets": {
+      "system_purpose": "ClassPulse is a classroom analytics tool for schools. A webcam in each classroom continuously analyses students' facial expressions to infer their emotions"
+    }
+  }
+}
