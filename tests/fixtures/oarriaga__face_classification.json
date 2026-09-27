@@ -1,0 +1,31 @@
+{
+  "source_url": "https://raw.githubusercontent.com/oarriaga/face_classification/master/README.md",
+  "label": "real-time emotion + gender classification",
+  "expected_domain": "biometric_id or other",
+  "model": "gemini-3.7-flash",
+  "recorded_on": "2026-09-27",
+  "llm_input_truncated": false,
+  "readme_text": "# This repository is deprecated for at TF-2.0 rewrite visit:\n# https://github.com/oarriaga/paz\n------------------------------------------------\n# Face classification and detection.\nReal-time face detection and emotion/gender classification using fer2013/IMDB datasets with a keras CNN model and openCV.\n* IMDB gender classification test accuracy: 96%.\n* fer2013 emotion classification test accuracy: 66%.\n\nFor more information please consult the [publication](https://github.com/oarriaga/face_classification/blob/master/report.pdf)\n\n# Emotion/gender examples:\n\n![alt tag](images/demo_results.png)\n\nGuided back-prop\n![alt tag](images/gradcam_results.png)\n\nReal-time demo:\n<div align='center'>\n  <img src='images/color_demo.gif' width='400px'>\n</div>\n\n[B-IT-BOTS](https://mas-group.inf.h-brs.de/?page_id=622) robotics team :)\n![alt tag](images/robocup_team.png)\n\n## Instructions\n\n### Run real-time emotion demo:\n> python3 video_emotion_color_demo.py\n\n### Run real-time guided back-prop demo:\n> python3 image_gradcam_demo.py\n\n### Make inference on single images:\n> python3 image_emotion_gender_demo.py <image_path>\n\ne.g.\n\n> python3 image_emotion_gender_demo.py ../images/test_image.jpg\n\n### Running with Docker\n\nWith a few steps one can get its own face classification and detection running. Follow the commands below:\n\n* ```docker pull ekholabs/face-classifier```\n* ```docker run -d -p 8084:8084 --name=face-classifier ekholabs/face-classifier```\n* ```curl -v -F image=@[path_to_image]  http://localhost:8084/classifyImage > image.png```\n\n### To train previous/new models for emotion classification:\n\n\n* Download the fer2013.tar.gz file from [here](https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data)\n\n* Move the downloaded file to the datasets directory inside this repository.\n\n* Untar the file:\n> tar -xzf fer2013.tar\n\n* Run the train_emotion_classification.py file\n> python3 train_emotion_classifier.py\n\n### To train previous/new models for gender classification:\n\n* Download the imdb_crop.tar file from [here](https://data.vision.ee.ethz.ch/cvl/rrothe/imdb-wiki/) (It's the 7GB button with the tittle Download faces only).\n\n* Move the downloaded file to the datasets directory inside this repository.\n\n* Untar the file:\n> tar -xfv imdb_crop.tar\n\n* Run the train_gender_classification.py file\n> python3 train_gender_classifier.py\n\n",
+  "raw_model_response": "{\n  \"system_purpose\": \"Performs real-time face detection along with emotion and gender classification from images and video streams.\",\n  \"deployment_domain\": \"biometric_id\",\n  \"data_sensitivity\": \"sensitive\",\n  \"decision_autonomy\": \"human_on_loop\",\n  \"affected_population\": \"general_public\",\n  \"extraction_confidence\": \"high\",\n  \"biometric_use\": true,\n  \"emotion_inference\": true,\n  \"social_scoring\": false,\n  \"real_time_biometric_public\": false,\n  \"human_oversight_mentioned\": false,\n  \"transparency_mentioned\": false,\n  \"evidence_snippets\": {\n    \"biometric_use\": \"Real-time face detection and emotion/gender classification using fer2013/IMDB datasets\",\n    \"data_sensitivity\": \"Processes facial biometric data for face detection and gender/emotion classification\",\n    \"deployment_domain\": \"Face classification and detection. Real-time face detection and emotion/gender classification\",\n    \"emotion_inference\": \"Run real-time emotion demo: python3 video_emotion_color_demo.py\",\n    \"system_purpose\": \"Real-time face detection and emotion/gender classification using fer2013/IMDB datasets with a keras CNN model and openCV.\"\n  }\n}",
+  "extracted_facts": {
+    "system_purpose": "Performs real-time face detection along with emotion and gender classification from images and video streams.",
+    "deployment_domain": "biometric_id",
+    "data_sensitivity": "sensitive",
+    "biometric_use": true,
+    "decision_autonomy": "human_on_loop",
+    "affected_population": "general_public",
+    "emotion_inference": true,
+    "social_scoring": false,
+    "real_time_biometric_public": false,
+    "human_oversight_mentioned": false,
+    "transparency_mentioned": false,
+    "extraction_confidence": "high",
+    "evidence_snippets": {
+      "biometric_use": "Real-time face detection and emotion/gender classification using fer2013/IMDB datasets",
+      "data_sensitivity": "Processes facial biometric data for face detection and gender/emotion classification",
+      "deployment_domain": "Face classification and detection. Real-time face detection and emotion/gender classification",
+      "emotion_inference": "Run real-time emotion demo: python3 video_emotion_color_demo.py",
+      "system_purpose": "Real-time face detection and emotion/gender classification using fer2013/IMDB datasets with a keras CNN model and openCV."
+    }
+  }
+}

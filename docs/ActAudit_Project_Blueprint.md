@@ -105,8 +105,14 @@ This is a **contract**, not a suggestion — the rule engine in Section 6 depend
 ### 5.1 Extraction prompt design notes
 - Instruct the model explicitly: *"You are extracting observable facts only. Do not assess risk, legality, or compliance. If information for a field is not present in the text, use the safest 'unknown' default for that field and lower extraction_confidence accordingly — do not guess."*
 - Unknown/absent-signal defaults should bias toward the *lower-risk* enum value, not the higher-risk one, and this should be paired with `extraction_confidence: low` so the UI can visibly flag "this classification is based on incomplete documentation" — this is itself a finding worth surfacing (see Section 9's documentation-opacity point), not something to hide.
+  - **Exact absent-signal defaults:** `deployment_domain: other`, `data_sensitivity: none`, `decision_autonomy: human_on_loop`, `affected_population: general_public`, every boolean `false`.
+  - **Exception — `decision_autonomy` defaults to `human_on_loop`, not the lowest-risk `human_in_loop`.** `human_in_loop` is a positive claim (a human approves each decision) and is a condition of Rule 7 (Minimal-Risk). Defaulting to it let documentation *silence* earn a Minimal-Risk classification, contradicting Section 9's point that thin documentation is a finding, not a pass. Observed in Phase 3 live testing: all five READMEs came back `human_in_loop` with no supporting text. `human_in_loop` must now be justified by an evidence snippet.
+  - **Evidence snippets for defaulted fields are dropped** by the extractor after parsing: a snippet is kept only when its field's value differs from the absent-signal default above (`system_purpose` and `extraction_confidence` have no default and keep theirs). Phase 3 live testing showed the model emitting placeholder snippets such as `"none"` for defaulted fields.
+  - **Fixtures store the raw model response** alongside the parsed facts, so post-processing (e.g. snippet filtering) can be re-checked offline without new API calls.
 - Require JSON-only output; use the SDK's structured output / response schema feature rather than trusting prompt instructions alone.
 - **Healthcare routing instruction (include explicitly in the prompt):** clinical/diagnostic tools (disease detection, treatment recommendation, medical imaging analysis) → `deployment_domain: other`, since that is the Annex I/medical-device path this tool doesn't assess (see the healthcare note in Section 6.2). Healthcare-*access* tools (insurance pricing, benefits eligibility, triage/resource prioritization) → `essential_services`.
+- **Biometric routing instruction (include explicitly in the prompt):** face recognition, face detection, or facial identification libraries/tools (e.g. face_recognition, dlib-based face matching, facial biometric matching) → `deployment_domain: biometric_id`, `biometric_use: true`, even if the README doesn't explicitly use the word "biometric". Added after Phase 3 live testing, where a fallback model (`gemini-3.5-flash`) routed ageitgey/face_recognition to `other`.
+- **Definition of `other` (include explicitly in the prompt):** `other` = general-purpose libraries and developer tools with no specific application domain, research code, and anything else. A library or toolkit *built for a specific domain* (e.g. credit scoring, résumé screening, face recognition) takes that domain, not `other`. Added after Phase 3 live testing, where the earlier wording ("libraries, developer tools… → other") made ayhandis/creditR (a credit-scoring package) route to `other` on `gemini-3.6-flash`.
 - **SDK call config:** the Gemini call (`google-genai`) must explicitly disable automatic function calling in its generation config — this call has no tools/functions to invoke, and leaving AFC on only produces a noisy SDK warning on every call.
 
 ## 6. Rule Engine (deterministic, auditable core)
@@ -200,7 +206,7 @@ Single-page Streamlit app, one interaction flow:
 
 | Layer | Choice | Notes |
 |---|---|---|
-| LLM extraction | Gemini 3.8 Flash via `google-genai` SDK, free tier — confirmed working against the project's API key; `gemini-2.5-flash` is no longer available to new users, do not revert to it | JSON-mode / response-schema constrained output; automatic function calling explicitly disabled (see 5.1) |
+| LLM extraction | Gemini 3.8 Flash via `google-genai` SDK, free tier — confirmed working against the project's API key; `gemini-2.5-flash` is no longer available to new users, do not revert to it | JSON-mode / response-schema constrained output; automatic function calling explicitly disabled (see 5.1). **Model fallback chain:** `gemini-3.8-flash` → `gemini-3.7-flash` → `gemini-3.6-flash` → `gemini-3.5-flash`. Free-tier quotas are per model (observed: 20 requests/day for 3.8 Flash), so on HTTP 429 or 503 the next model is tried; other errors are not retried. A malformed-output retry stays on the model that answered. `gemini-flash-latest` is excluded (shares 3.8's quota). Every result and fixture records which model produced it. |
 | Backend | Python 3.10+ | |
 | Rule engine | Plain Python, ordered list + dataclasses | No ML, no external deps beyond stdlib |
 | GitHub fetch | `requests` against raw.githubusercontent.com | No auth for public repos |
@@ -250,10 +256,12 @@ actaudit/
 - [ ] Quick manual test against 3–4 real public repos
 
 ### Phase 3 — LLM Extraction
-- [ ] `extractor.py`: prompt design per Section 5.1, JSON-schema-constrained Gemini call
-- [ ] Retry-once-on-malformed-JSON logic
-- [ ] Field-level enum validation at the boundary (reject/retry invalid extractor output rather than passing it downstream)
-- [ ] Test against 8–10 real READMEs spanning different domains/risk levels (aim for coverage: a face-recognition tool, a hiring tool, a credit-scoring tool, a general chatbot, a clinical/diagnostic tool such as medical imaging analysis (expected domain: `other`), a healthcare-access tool such as triage prioritization or health-insurance pricing (expected domain: `essential_services`), a plain utility library) — record actual outputs in `tests/fixtures/` so extraction behavior is reproducible even if the live API changes later
+- [x] `extractor.py`: prompt design per Section 5.1, JSON-schema-constrained Gemini call
+- [x] Retry-once-on-malformed-JSON logic
+- [x] Field-level enum validation at the boundary (reject/retry invalid extractor output rather than passing it downstream)
+- [x] Test against 8–10 real READMEs spanning different domains/risk levels (aim for coverage: a face-recognition tool, a hiring tool, a credit-scoring tool, a general chatbot, a clinical/diagnostic tool such as medical imaging analysis (expected domain: `other`), a healthcare-access tool such as triage prioritization or health-insurance pricing (expected domain: `essential_services`), a plain utility library) — record actual outputs in `tests/fixtures/` so extraction behavior is reproducible even if the live API changes later
+  - **Fixture history:** the 10-repo set in `tests/fixtures/` (recorded by `scripts/record_fixtures.py`) was re-recorded in full after two prompt fixes found in live testing: (1) the biometric routing instruction (Section 5.1), after a fallback model routed ageitgey/face_recognition to `other`; (2) the narrowed definition of `other`, after ayhandis/creditR routed to `other`. The committed set is the one recorded after both fixes (2026-09-27), and every repo classifies as expected. Each fixture records the model that answered; the set spans `gemini-3.6/3.7/3.8-flash` because of per-model free-tier quotas.
+  - **Robustness added during recording:** transport failures (timeouts, dropped connections) are wrapped as `ExtractionAPIError`, and the default client uses a 60s request timeout.
 
 ### Phase 4 — Principle Mapping
 - [ ] `principles.py`: implement Section 7's UNESCO/IEEE flag logic

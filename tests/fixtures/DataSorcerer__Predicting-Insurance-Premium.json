@@ -1,0 +1,27 @@
+{
+  "source_url": "https://raw.githubusercontent.com/DataSorcerer/Predicting-Insurance-Premium/master/README.md",
+  "label": "healthcare access: medical insurance premium prediction",
+  "expected_domain": "essential_services",
+  "model": "gemini-3.6-flash",
+  "recorded_on": "2026-09-27",
+  "llm_input_truncated": false,
+  "readme_text": "# Predicting-Insurance-Premium\nPredicting medical insurance premium based on beneficiary's health &amp; lifestyle using regression modelling\n\n[Click here to check out the comprehensive analysis and report (REPORT_InsurancePrediction.md)](https://github.com/DataSorcerer/Predicting-Insurance-Premium/blob/master/REPORT_InsurancePrediction.md)  \n\nHealth insurance is one of the most marketed products offered by leading insurance firms. The bottom line in this industry is driven by the simple fact that the capital spent by the insurance company in response to beneficiary claims should not exceed customer premium. Higher the difference between settled claims and total premium received, higher are the profits.   \n\nThis predictive model seeks to achieve the following objectives:   \n\n1. **Analyze client profile:**   \nHelp an insurance company factor in interaction between different features like age, BMI, smoking habits in order to predict the insurance premium charges for new customers and adjust those of existing customers.   \n2. **Predict insurance premium:**     \nPrevent the insurer from under-charging a risk prone individual and thus maximize the profits by charging them appropriately.   \n3. **Win-win for both:- Insurer & Beneficiary:**    \nHelp the prospective insurance beneficiaries understand the factors that could lower their insurance premium.   \n\nThe modelling and analysis is structured as follows:   \n1. Importing the dataset   \n2. Exploratory data analysis (EDA)/ **Statistical Modelling**  \n3. Training the model   \n4. Intrepreting the results   \n5. Improvements in the model   \n6. Summarize practical insights from the analysis   \n\n - \"REPORT_InsurancePrediction.md\" file has the detailed report with code and analysis\n - The source code folder contains the RMD file with R code for building and evaluating the regression model.   \n",
+  "raw_model_response": "{\n  \"system_purpose\": \"Predicts medical insurance premiums based on beneficiary health and lifestyle features using regression modeling.\",\n  \"deployment_domain\": \"essential_services\",\n  \"data_sensitivity\": \"sensitive\",\n  \"decision_autonomy\": \"human_on_loop\",\n  \"affected_population\": \"general_public\",\n  \"extraction_confidence\": \"high\",\n  \"biometric_use\": false,\n  \"emotion_inference\": false,\n  \"social_scoring\": false,\n  \"real_time_biometric_public\": false,\n  \"human_oversight_mentioned\": false,\n  \"transparency_mentioned\": false,\n  \"evidence_snippets\": {\n    \"system_purpose\": \"Predicting medical insurance premium based on beneficiary's health & lifestyle using regression modelling\",\n    \"transparency_mentioned\": \"Help the prospective insurance beneficiaries understand the factors that could lower their insurance premium.\"\n  }\n}",
+  "extracted_facts": {
+    "system_purpose": "Predicts medical insurance premiums based on beneficiary health and lifestyle features using regression modeling.",
+    "deployment_domain": "essential_services",
+    "data_sensitivity": "sensitive",
+    "biometric_use": false,
+    "decision_autonomy": "human_on_loop",
+    "affected_population": "general_public",
+    "emotion_inference": false,
+    "social_scoring": false,
+    "real_time_biometric_public": false,
+    "human_oversight_mentioned": false,
+    "transparency_mentioned": false,
+    "extraction_confidence": "high",
+    "evidence_snippets": {
+      "system_purpose": "Predicting medical insurance premium based on beneficiary's health & lifestyle using regression modelling"
+    }
+  }
+}
