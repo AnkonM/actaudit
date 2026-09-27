@@ -226,13 +226,19 @@ actaudit/
 ├── rules.py                  # Rule engine: rule table + evaluator
 ├── principles.py              # UNESCO/IEEE principle mapping (Section 7)
 ├── github_fetch.py            # README fetch logic + error handling
+├── pipeline.py                # fetch → extract → rules → principles, Streamlit-free (Phase 5)
 ├── schema.py                   # Dataclass/TypedDict for extraction schema (Section 5)
 ├── examples/                    # Pre-loaded demo repos (name → URL or cached text)
 │   └── quick_picks.py
 ├── tests/
 │   ├── test_rules.py           # Unit tests: given a fact-set, assert correct tier
 │   ├── test_extractor.py        # Mocked LLM response → schema validation
+│   ├── test_principles.py       # Section 7 principle flags
+│   ├── test_pipeline.py         # Offline pipeline tests + opt-in live E2E (ACTAUDIT_LIVE=1)
 │   └── fixtures/                 # Sample READMEs for offline rule-engine testing
+├── scripts/
+│   ├── check_gemini.py        # Phase 0 manual API-key check
+│   └── record_fixtures.py     # Manual live extraction → tests/fixtures/
 ├── requirements.txt
 ├── .env.example
 └── README.md                      # Setup + usage instructions (separate from course report)
@@ -270,8 +276,8 @@ actaudit/
 - [x] Unit test alongside the rule engine tests (`tests/test_principles.py`)
 
 ### Phase 5 — Integration
-- [ ] Wire fetch → extract → rules → principles into a single callable pipeline function (keep this decoupled from Streamlit so it's independently testable)
-- [ ] End-to-end test: real GitHub URL in, full result object out
+- [x] Wire fetch → extract → rules → principles into a single callable pipeline function (keep this decoupled from Streamlit so it's independently testable) — `pipeline.py`: `analyze_github(url)` / `analyze_text(text)` → `AnalysisResult` (full source text, truncation flag, extraction incl. answering model, classification, principle flags); stage errors propagate unchanged for §8.1
+- [x] End-to-end test: real GitHub URL in, full result object out — `tests/test_pipeline.py::test_live_github_url_end_to_end`, opt-in via `ACTAUDIT_LIVE=1` so the default suite stays offline and quota-free
 
 ### Phase 6 — Dashboard
 - [ ] `app.py`: input tabs, analyze button, loading state
