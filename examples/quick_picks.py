@@ -10,5 +10,6 @@ QUICK_PICKS: list[tuple[str, str]] = [
     ("Face recognition library", "ageitgey__face_recognition"),
     ("Résumé parser (hiring)", "OmkarPathak__pyresparser"),
     ("Chest X-ray diagnosis", "arnoweng__CheXNet"),
-    ("HTTP utility library", "psf__requests"),
+    ("HTTP utility library", "psf__requests"),  # Limited-Risk
+    ("On-device tab organizer (sample text)", "text__tab_grouping_extension"),  # Minimal-Risk
 ]

@@ -21,7 +21,7 @@ from extractor import (  # noqa: E402
     extract_with_details,
     prepare_llm_text,
 )
-from github_fetch import fetch_readme  # noqa: E402
+from github_fetch import fetch_readme, parse_repo_url  # noqa: E402
 from pipeline import clean_pasted_text  # noqa: E402
 
 FIXTURE_DIR = Path(__file__).resolve().parent.parent / "tests" / "fixtures"
@@ -105,11 +105,12 @@ def main() -> None:
     load_dotenv()
     FIXTURE_DIR.mkdir(parents=True, exist_ok=True)
     for url, label, expected in REPOS:
-        readme = fetch_readme(url)
-        path = FIXTURE_DIR / f"{readme.owner}__{readme.repo}.json"
-        if path.exists():
+        owner, repo = parse_repo_url(url)
+        path = FIXTURE_DIR / f"{owner}__{repo}.json"
+        if path.exists():  # checked before fetching, so skips need no network
             print(f"skip {path.name} (already recorded)", file=sys.stderr)
             continue
+        readme = fetch_readme(url)
         source = {"source_url": readme.source_url, "readme_text": readme.text}
         _record(path, source, label, expected, readme.text)
     for stem, label, expected, raw_text in TEXT_EXAMPLES:

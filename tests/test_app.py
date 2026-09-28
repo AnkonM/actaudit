@@ -40,6 +40,7 @@ def test_initial_render_has_no_errors():
     ("Résumé parser (hiring)", "High-Risk", 4),
     ("Chest X-ray diagnosis", "High-Risk", 5),
     ("HTTP utility library", "Limited-Risk", 8),
+    ("On-device tab organizer (sample text)", "Minimal-Risk", 7),
 ])
 def test_quick_picks_render_from_fixtures(label, tier, rule):
     at = run_app()

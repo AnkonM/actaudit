@@ -1,0 +1,29 @@
+{
+  "source_kind": "text",
+  "source_text": "TidyTabs is a free browser extension for everyday users that suggests how to group your open tabs by topic. It runs entirely on your device and collects no personal data. It never acts on its own: every suggested grouping is shown to you and is only applied when you click Accept.",
+  "label": "fictional: on-device tab grouping browser extension",
+  "expected_domain": "Minimal-Risk, rule 7 (general_consumer + no data + human_in_loop)",
+  "model": "gemini-3.7-flash",
+  "recorded_on": "2026-09-28",
+  "llm_input_truncated": false,
+  "raw_model_response": "{\n  \"system_purpose\": \"Browser extension that suggests how to group open tabs by topic.\",\n  \"deployment_domain\": \"general_consumer\",\n  \"data_sensitivity\": \"none\",\n  \"decision_autonomy\": \"human_in_loop\",\n  \"affected_population\": \"general_public\",\n  \"extraction_confidence\": \"high\",\n  \"biometric_use\": false,\n  \"emotion_inference\": false,\n  \"social_scoring\": false,\n  \"real_time_biometric_public\": false,\n  \"human_oversight_mentioned\": true,\n  \"transparency_mentioned\": false,\n  \"evidence_snippets\": {\n    \"deployment_domain\": \"browser extension for everyday users\",\n    \"human_oversight_mentioned\": \"It never acts on its own: every suggested grouping is shown to you and is only applied when you click Accept.\",\n    \"system_purpose\": \"suggests how to group your open tabs by topic\",\n    \"transparency_mentioned\": \"None provided in text\"\n  }\n}",
+  "extracted_facts": {
+    "system_purpose": "Browser extension that suggests how to group open tabs by topic.",
+    "deployment_domain": "general_consumer",
+    "data_sensitivity": "none",
+    "biometric_use": false,
+    "decision_autonomy": "human_in_loop",
+    "affected_population": "general_public",
+    "emotion_inference": false,
+    "social_scoring": false,
+    "real_time_biometric_public": false,
+    "human_oversight_mentioned": true,
+    "transparency_mentioned": false,
+    "extraction_confidence": "high",
+    "evidence_snippets": {
+      "deployment_domain": "browser extension for everyday users",
+      "human_oversight_mentioned": "It never acts on its own: every suggested grouping is shown to you and is only applied when you click Accept.",
+      "system_purpose": "suggests how to group your open tabs by topic"
+    }
+  }
+}
