@@ -26,6 +26,9 @@ class Trigger:
 class Principle:
     unesco: str
     ieee: str
+    # Numbered identifier, verified against IEEE "Ethically Aligned Design", First
+    # Edition, General Principles (standards.ieee.org ead1e_general_principles.pdf).
+    ieee_ref: str
     triggers: tuple[Trigger, ...]
 
 
@@ -33,6 +36,7 @@ class Principle:
 class PrincipleFlag:
     unesco: str
     ieee: str
+    ieee_ref: str
     fired_fields: tuple[tuple[str, str], ...]
     explanation: str
     evidence: dict[str, str]
@@ -43,6 +47,7 @@ PRINCIPLES: list[Principle] = [
     Principle(
         unesco="Human oversight and determination",
         ieee="Accountability",
+        ieee_ref="IEEE EAD General Principle 6",
         # Two independent signals: documentation silence, or an explicitly
         # fully-autonomous pipeline. Either is sufficient (Section 7 rationale).
         triggers=(
@@ -62,6 +67,7 @@ PRINCIPLES: list[Principle] = [
     Principle(
         unesco="Transparency and explainability",
         ieee="Transparency",
+        ieee_ref="IEEE EAD General Principle 5",
         triggers=(
             Trigger(
                 field="transparency_mentioned",
@@ -74,6 +80,7 @@ PRINCIPLES: list[Principle] = [
     Principle(
         unesco="Fairness and non-discrimination",
         ieee="Human Rights",
+        ieee_ref="IEEE EAD General Principle 1",
         triggers=(
             Trigger(
                 field="affected_population",
@@ -85,6 +92,7 @@ PRINCIPLES: list[Principle] = [
     Principle(
         unesco="Right to privacy and data protection",
         ieee="Data Agency",
+        ieee_ref="IEEE EAD General Principle 3",
         triggers=(
             Trigger(
                 field="data_sensitivity",
@@ -96,6 +104,7 @@ PRINCIPLES: list[Principle] = [
     Principle(
         unesco="Human dignity and autonomy",
         ieee="Well-being",
+        ieee_ref="IEEE EAD General Principle 2",
         triggers=(
             Trigger(
                 field="social_scoring",
@@ -135,6 +144,7 @@ def evaluate_principles(facts: ExtractedFacts) -> list[PrincipleFlag]:
             PrincipleFlag(
                 unesco=principle.unesco,
                 ieee=principle.ieee,
+                ieee_ref=principle.ieee_ref,
                 fired_fields=fired_fields,
                 explanation=f"Flagged because {reasons}.",
                 evidence={

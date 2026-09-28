@@ -40,7 +40,7 @@ from github_fetch import (  # noqa: F401  (error types re-exported for the UI)
     fetch_readme,
 )
 from principles import PrincipleFlag, evaluate_principles
-from rules import Classification, RiskTier, classify  # noqa: F401
+from rules import RULES, Classification, RiskTier, classify  # noqa: F401
 from schema import ExtractedFacts
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "tests" / "fixtures"
@@ -141,3 +141,16 @@ def analyze_quick_pick(label: str) -> AnalysisResult:
     owner, repo, branch, filename = record["source_url"].split("/")[3:7]
     readme = FetchedReadme(owner, repo, branch, filename, record["source_url"], record["readme_text"])
     return _assemble("github", f"{owner}/{repo}", readme.text, readme, extraction)
+
+
+def rule_table() -> list[dict[str, Any]]:
+    """The ordered rule table (first match wins), for display in the UI."""
+    return [
+        {
+            "number": rule.number,
+            "condition": rule.condition_text,
+            "tier": rule.tier.value,
+            "provision": rule.provision,
+        }
+        for rule in RULES
+    ]

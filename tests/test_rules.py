@@ -119,3 +119,16 @@ def test_rule_table_structure():
     assert [r.number for r in RULES] == list(range(1, 9))
     assert RULES[-1].trigger_fields == ()
     assert all(r.citation_verified is True for r in RULES)
+
+
+def test_condition_text_mirrors_blueprint_rule_table():
+    """The UI's rule table shows condition_text; it must match blueprint §6.2 exactly."""
+    import re
+    from pathlib import Path
+
+    blueprint = (Path(__file__).resolve().parent.parent / "docs" / "ActAudit_Project_Blueprint.md").read_text()
+    section = blueprint.split("### 6.2 v1 Rule Table")[1].split("**Note on why")[0]
+    rows = re.findall(r"^\| (\d) \| (.+?) \| \*\*", section, re.M)
+    assert [int(n) for n, _ in rows] == [r.number for r in RULES]
+    for (number, condition), rule in zip(rows, RULES):
+        assert rule.condition_text == condition.strip("`*"), f"rule {number}"

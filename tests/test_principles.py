@@ -111,3 +111,13 @@ def test_recorded_fixtures_evaluate(path):
     facts = ExtractedFacts.from_dict(json.loads(path.read_text())["extracted_facts"])
     for flag in evaluate_principles(facts):
         assert flag.fired_fields and flag.explanation.endswith(".")
+
+
+def test_ieee_identifiers_match_ead_general_principles():
+    """Numbers verified against IEEE EAD First Edition, General Principles (primary PDF)."""
+    expected = {"Human Rights": 1, "Well-being": 2, "Data Agency": 3, "Transparency": 5, "Accountability": 6}
+    assert {p.ieee: p.ieee_ref for p in PRINCIPLES} == {
+        name: f"IEEE EAD General Principle {n}" for name, n in expected.items()
+    }
+    flag = flagged(data_sensitivity=S.SENSITIVE)[PRIVACY]
+    assert flag.ieee_ref == "IEEE EAD General Principle 3"

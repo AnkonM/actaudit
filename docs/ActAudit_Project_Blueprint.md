@@ -163,11 +163,13 @@ Separate from the EU AI Act tier, produce a secondary set of flags mapping extra
 
 | Extracted signal | UNESCO principle implicated | IEEE EAD principle implicated |
 |---|---|---|
-| `human_oversight_mentioned == false` or `decision_autonomy == fully_autonomous` | Human oversight and determination | Accountability |
-| `transparency_mentioned == false` | Transparency and explainability | Transparency |
-| `affected_population == vulnerable_groups` | Fairness and non-discrimination | Human Rights |
-| `data_sensitivity == sensitive` | Right to privacy and data protection | Data Agency |
-| `social_scoring == true` or `real_time_biometric_public == true` | Human dignity and autonomy | Well-being |
+| `human_oversight_mentioned == false` or `decision_autonomy == fully_autonomous` | Human oversight and determination | Accountability (General Principle 6) |
+| `transparency_mentioned == false` | Transparency and explainability | Transparency (General Principle 5) |
+| `affected_population == vulnerable_groups` | Fairness and non-discrimination | Human Rights (General Principle 1) |
+| `data_sensitivity == sensitive` | Right to privacy and data protection | Data Agency (General Principle 3) |
+| `social_scoring == true` or `real_time_biometric_public == true` | Human dignity and autonomy | Well-being (General Principle 2) |
+
+**Citation identifiers (added in the UI rebuild):** each flag shows its numbered identifier. IEEE numbers are verified against the primary source, IEEE *Ethically Aligned Design*, First Edition, General Principles (standards.ieee.org `ead1e_general_principles.pdf`), and are stored as `Principle.ieee_ref` in `principles.py`. UNESCO principles are cited by document only ("UNESCO Recommendation on the Ethics of AI (2021)"): the paragraph numbers have **not** been verified, because the UNESDOC primary text could not be retrieved automatically. See Section 14.
 
 Rationale for the human-oversight row's two triggers: documentation silence and an explicitly fully-autonomous pipeline are independent signals — either is sufficient to flag the concern.
 
@@ -187,7 +189,10 @@ Single-page Streamlit app, one interaction flow:
    - **"Why this tier" panel** — ALWAYS renders `justification` and `provision` as two separate lines, for every rule (including the Rule 8 default). Some justification strings already restate the provision in prose; that's fine — the panel does not deduplicate, it just consistently shows both fields
    - **Principle breakdown** — UNESCO/IEEE flags from Section 7, each with its one-line explanation; fact-based flags and documentation-gap flags (`documentation_gap == true`) rendered as two separate groups (see Section 7)
    - **Raw source toggle** — collapsible view of the actual README/text that was analyzed, for verification
+   - **Rule table** — the full ordered rule table (condition, tier, provision) with the deciding rule marked. Rule numbers are *not* shown on the verdict itself (they mean nothing to a user); the verdict points to this table instead
 4. **Example quick-picks** — 3–4 pre-loaded example repos spanning different tiers, as buttons, for a fast/reliable live demo that doesn't depend on live network conditions during presentation
+
+**As shipped (Phase 7, UI rebuild):** a persistent not-legal-advice notice under the title (the earlier "What's simplified" expander was removed at the user's request; the simplifications and limitations stay documented in Sections 6.2 and 9 and belong in the README/report); an input card (segmented control, URL + Analyze, six tier-iconed quick-picks covering all four tiers); a verdict card with a solid colour banner (the app's only custom CSS) beside "Why this tier"; tabs for Principles, Extracted facts, Rule table and Raw source; and a "How ActAudit works" explainer that is expanded on the idle page and collapses once a result exists.
 
 ### 8.1 Error states to handle gracefully in the UI
 - Invalid/unreachable GitHub URL
@@ -290,14 +295,14 @@ actaudit/
   - Live pasted-text check (real Gemini call through the app): a short fictional loan-approval description → `essential_services`, `fully_autonomous` → High-Risk, Rule 4
 
 ### Phase 7 — Polish & Deploy
-- [x] Visual pass on the Streamlit UI (spacing, color consistency, badge styling) — Phase 7A:
-  - Tier badge: tier name, icon and subtitle always shown as text (never colour alone); Prohibited (⛔, dark red, double white border, "Banned practice under EU AI Act Art. 5") is distinct from High-Risk (⚠️, red, "Allowed, with strict obligations"); fixed high-contrast colours so it reads the same in light and dark themes
-  - Result order: badge + trust caption beside "Why this tier" (justification and provision on separate lines), then principles beside the facts table, then the raw-source toggle; wide layout; one small CSS block for the badge only
-  - Two-sentence extract-then-classify intro; persistent notice under the title ("Educational decision-support tool implementing a simplified subset of the EU AI Act. Not legal advice or a compliance certification.") with an expander listing the Section 6.2 simplifications and Section 9 limitations
-  - Trust signals: caption names the answering model and whether the result is live, cached or a recorded example; if the answering model isn't `MODEL_CHAIN[0]`, a caption warns a fallback model answered and extraction may be less accurate
-  - Quota protection for the public deployment: `st.cache_data` keyed on (input kind, cleaned input) with a 24h TTL, so repeat submissions never spend quota twice; a cap of 5 live analyses per session on the shared key (cache hits and failed analyses don't count), with a message pointing to the quick-picks; an optional sidebar field for a visitor's own Gemini key (password field, session memory only, passed as an `_`-prefixed argument so it is never part of a cache key, never logged or written to disk), which overrides the shared key and lifts the cap; a dedicated `AllModelsUnavailableError` whose message points to the quick-picks
-  - `app.py` still imports only `pipeline.py`, which now re-exports `MODEL_CHAIN`, `AllModelsUnavailableError` and a `make_client`-backed `api_key` parameter on `analyze_github`/`analyze_text`
-  - Tests: `tests/test_app.py` covers the cache, the session cap, the BYO-key path (fake client, no real key), fallback caption, exhausted-chain message, badge distinction and section order
+- [x] Visual pass on the Streamlit UI (spacing, color consistency, badge styling) — shipped as the **UI rebuild** (built with the Streamlit agent skills; replaced the Phase 7A design, which stays in history at commit `946fbc8`):
+  - Theme in `.streamlit/config.toml` with both `[theme.light]` and `[theme.dark]`; indigo primary (#3949AB light / #5C6BC0 dark) so the Analyze button never looks like a verdict; tier text tones tuned per mode; every theme colour passes WCAG AA
+  - Verdict banner: the app's only custom CSS, in one marked `VERDICT CSS` block. Solid fill per tier with its own light/dark colours via `light-dark()` (follows the color-scheme Streamlit sets, so it switches instantly with the theme). Text/fill contrast, all ≥ 4.5:1 — light: Prohibited 10.02, High 6.47, Limited 8.73, Minimal 5.02; dark: 11.16, 8.31, 8.56, 6.81 (enforced by `test_banner_colours_meet_wcag_aa_in_both_themes`). Icons are CSS masks from fixed Material Icons paths, percent-encoded because Streamlit's HTML sanitizer strips inline `<svg>` and drops any `<style>` containing markup. Only fixed strings from the tier mapping ever enter the HTML
+  - Prohibited vs High-Risk (both red): block icon + "Prohibited practice" + dark fill + double border vs warning icon + "High-risk system" + bright fill
+  - Layout: compact header (title, persistent notice); input card; verdict card (banner, origin/confidence/truncation badges, source and model captions, fallback-model warning) beside "Why this tier"; tabs for Principles (stated facts vs documentation gaps, each card with its identifier), Extracted facts, Rule table, Raw source; "How ActAudit works" (two-sentence explainer + three-step strip) expanded when idle, collapsed once a result exists. Verdict is visible without scrolling at 1440×900
+  - Rule table tab: shows `Rule.condition_text` (new field in `rules.py`, mirrors Section 6.2 word for word, enforced by `test_condition_text_mirrors_blueprint_rule_table`) via `pipeline.rule_table()`
+  - Unchanged behaviour carried over from 7A: pipeline-only imports in `app.py`, `st.cache_data` on live analyses (24h, keyed on input only), 5-analysis session cap, bring-your-own key (session memory only), all error states with specific titled alerts and no stack traces, fallback-model caption
+  - Verified in headless Chromium (Playwright, dev-only) in light and dark themes for every state; tests: `tests/test_app.py` (46 AppTest tests)
 - [ ] Deploy to Streamlit Community Cloud / HF Spaces
 - [ ] Smoke-test the deployed link end-to-end (env vars carry over correctly, no localhost-only assumptions)
 
@@ -325,4 +330,5 @@ actaudit/
 - ~~Exact EU AI Act article/annex numbers in the rule table are unverified placeholders~~ — resolved: citations audited against Regulation (EU) 2024/1689 (Section 6.2 / 6.2.1).
 - Whether `human_on_loop` vs `human_in_loop` distinction is worth the added extraction complexity, or should be collapsed to a boolean `has_human_oversight` — current schema keeps the 3-way enum for richer justification text; revisit if extraction accuracy on this field proves unreliable in Phase 3 testing.
 - TidyTabs fixture has no evidence snippet for decision_autonomy; consider requiring a snippet for every non-default field in the extraction prompt. Not fixed to avoid re-recording quota.
+- UNESCO paragraph numbers for the Section 7 principles are not yet verified (UNESDOC blocked automated retrieval). Verify against the primary text before the report; also check whether "Human dignity and autonomy" is one of the Recommendation's values (§III.1) rather than its principles (§III.2).
 - PDF export and batch mode are explicitly stretch-only — do not let them creep into the Phase 1–7 critical path.

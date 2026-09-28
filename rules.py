@@ -36,6 +36,9 @@ class Rule:
     reasoning: str
     provision: str
     citation_verified: bool = False
+    # Human-readable condition shown in the UI's rule table. Mirrors blueprint §6.2
+    # word for word (enforced by tests/test_rules.py).
+    condition_text: str = ""
 
 
 @dataclass(frozen=True)
@@ -75,6 +78,7 @@ RULES: list[Rule] = [
         "exceptions exist, not modeled here)",
         provision="EU AI Act Art. 5(1)(h)",
         citation_verified=True,
+        condition_text='real_time_biometric_public == true and deployment_domain == law_enforcement',
     ),
     Rule(
         number=2,
@@ -85,6 +89,7 @@ RULES: list[Rule] = [
         "that leads to detrimental treatment is a prohibited practice, whoever operates it",
         provision="EU AI Act Art. 5(1)(c)",
         citation_verified=True,
+        condition_text='social_scoring == true',
     ),
     Rule(
         number=3,
@@ -96,6 +101,7 @@ RULES: list[Rule] = [
         "is a prohibited practice, except for medical or safety reasons",
         provision="EU AI Act Art. 5(1)(f)",
         citation_verified=True,
+        condition_text='emotion_inference == true and deployment_domain in [education, hiring]',
     ),
     Rule(
         number=4,
@@ -110,6 +116,7 @@ RULES: list[Rule] = [
         "high-risk regardless of human oversight",
         provision="EU AI Act Annex III + Art. 6(2)",
         citation_verified=True,
+        condition_text='deployment_domain in [hiring, essential_services, law_enforcement, education, migration_asylum_border, critical_infrastructure]',
     ),
     Rule(
         number=5,
@@ -121,6 +128,7 @@ RULES: list[Rule] = [
         "heightened-risk treatment",
         provision="project heuristic, not derived from a specific Act provision",
         citation_verified=True,
+        condition_text='data_sensitivity == sensitive and affected_population == vulnerable_groups',
     ),
     Rule(
         number=6,
@@ -131,6 +139,7 @@ RULES: list[Rule] = [
         "are a named high-risk area",
         provision="EU AI Act Annex III point 1(a)/(b)",
         citation_verified=True,
+        condition_text='biometric_use == true and deployment_domain == biometric_id',
     ),
     Rule(
         number=7,
@@ -143,6 +152,7 @@ RULES: list[Rule] = [
         "and a human approves each decision",
         provision="project heuristic, not derived from a specific Act provision",
         citation_verified=True,
+        condition_text='deployment_domain == general_consumer and data_sensitivity == none and decision_autonomy == human_in_loop',
     ),
     Rule(
         number=8,  # default — always matches, so it must stay last
@@ -154,6 +164,7 @@ RULES: list[Rule] = [
         "duties may separately apply to systems that interact directly with people or "
         "generate synthetic content",
         citation_verified=True,
+        condition_text='(default — no other rule fired)',
     ),
 ]
 
