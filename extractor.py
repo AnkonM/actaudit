@@ -70,6 +70,10 @@ class ExtractionAPIError(ExtractionError):
         self.code = code
 
 
+class InvalidAPIKeyError(ExtractionAPIError):
+    """Gemini rejected the API key itself. Retrying or falling back won't help."""
+
+
 class AllModelsUnavailableError(ExtractionAPIError):
     """Every model in MODEL_CHAIN hit a quota, overload or deadline error."""
 
@@ -228,6 +232,12 @@ def _call(client: Any, model: str, contents: str) -> str | None:
     try:
         response = client.models.generate_content(model=model, contents=contents, config=config)
     except errors.APIError as exc:
+        if _is_invalid_key(exc):
+            raise InvalidAPIKeyError(
+                f"Gemini rejected the API key (HTTP {exc.code}). Check that the key is "
+                "correct and active in Google AI Studio.",
+                code=exc.code,
+            ) from exc
         if exc.code == 429:
             message = (
                 "The Gemini API rate limit or quota was reached. Wait and try again; "
@@ -242,6 +252,16 @@ def _call(client: Any, model: str, contents: str) -> str | None:
             "Check your connection and try again."
         ) from exc
     return response.text
+
+
+def _is_invalid_key(exc: errors.APIError) -> bool:
+    """Gemini reports a bad key as HTTP 400 with reason API_KEY_INVALID ("API key not
+    valid"); 401/403 are auth failures."""
+    if exc.code in (401, 403):
+        return True
+    details = (getattr(exc, "details", None) or {}).get("error", {}).get("details", [])
+    reasons = {d.get("reason") for d in details if isinstance(d, dict)}
+    return "API_KEY_INVALID" in reasons or "API key not valid" in (exc.message or "")
 
 
 def _call_with_fallback(client: Any, models: Sequence[str], contents: str) -> tuple[str | None, str]:

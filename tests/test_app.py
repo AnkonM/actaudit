@@ -354,6 +354,7 @@ def test_repo_not_found_warning(monkeypatch):
     (pipeline.RateLimitedError("x"), "GitHub is rate-limiting requests"),
     (pipeline.NetworkError("x"), "Couldn't reach GitHub"),
     (pipeline.ExtractionAPIError("x", code=401), "The Gemini API is unavailable"),
+    (pipeline.InvalidAPIKeyError("x", code=400), "The Gemini API key was rejected"),
     (pipeline.AllModelsUnavailableError("x", code=429, codes=(429, 429, 429, 429)),
      "All Gemini models are out of quota or busy"),
     (pipeline.AllModelsUnavailableError("x", code=503, codes=(503, 503, 503, 503)),
@@ -533,6 +534,27 @@ def test_server_key_is_never_rendered(monkeypatch):
     counting_fake(monkeypatch, json.dumps(VALID))
     at = paste(run_app(), "HireBot ranks job applicants automatically.")
     assert FAKE_SERVER_KEY not in all_text(at) and FAKE_SERVER_KEY not in banner(at)
+
+
+def test_rejected_own_key_points_to_the_sidebar(monkeypatch):
+    def fail(*args, **kwargs):
+        raise pipeline.InvalidAPIKeyError("Gemini rejected the API key (HTTP 400).", code=400)
+    _patch(monkeypatch, analyze_text=fail)
+    at = run_app()
+    at.sidebar.text_input(key="byo_key").input(FAKE_KEY).run()
+    at = paste(at, "HireBot ranks job applicants automatically.")
+    assert alert_title(at.warning[0]) == "The Gemini API key was rejected"
+    assert "entered in the sidebar" in at.warning[0].value
+    assert "Try again shortly" not in at.warning[0].value
+
+
+def test_rejected_shared_key_does_not_blame_the_visitor(monkeypatch):
+    def fail(*args, **kwargs):
+        raise pipeline.InvalidAPIKeyError("Gemini rejected the API key (HTTP 400).", code=400)
+    _patch(monkeypatch, analyze_text=fail)
+    at = paste(run_app(), "HireBot ranks job applicants automatically.")
+    assert alert_title(at.warning[0]) == "The Gemini API key was rejected"
+    assert "sidebar" not in at.warning[0].value
 
 
 # --- Trust signals -------------------------------------------------------------------

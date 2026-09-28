@@ -187,11 +187,12 @@ ERROR_STYLES: list[tuple[type[Exception], str, str]] = [
     (pipeline.RateLimitedError, "GitHub is rate-limiting requests", ":material/hourglass_top:"),
     (pipeline.NetworkError, "Couldn't reach GitHub", ":material/wifi_off:"),
     (pipeline.EmptyInputError, "Nothing to analyze", ":material/edit_note:"),
+    (pipeline.InvalidAPIKeyError, "The Gemini API key was rejected", ":material/key_off:"),
     (pipeline.AllModelsUnavailableError, "All Gemini models are out of quota or busy", ":material/cloud_off:"),  # retitled in _set_error
     (pipeline.ExtractionAPIError, "The Gemini API is unavailable", ":material/cloud_off:"),
     (pipeline.MalformedExtractionError, "The model returned unusable output", ":material/report:"),
 ]
-POINT_TO_QUICK_PICKS = (pipeline.ExtractionAPIError,)  # includes AllModelsUnavailableError
+POINT_TO_QUICK_PICKS = (pipeline.ExtractionAPIError,)  # includes the subclasses above
 CATCH_ALL = ("Something went wrong", ":material/error:")
 
 
@@ -229,7 +230,7 @@ def _clear_output() -> None:
     st.session_state.error = None
 
 
-def _set_error(exc: Exception) -> None:
+def _set_error(exc: Exception, own_key_used: bool = False) -> None:
     if isinstance(exc, pipeline.AllModelsUnavailableError) and not exc.quota_exhausted:
         # Only overload/deadline errors: say so, rather than implying quota ran out.
         st.session_state.error = (
@@ -241,6 +242,9 @@ def _set_error(exc: Exception) -> None:
     for cls, title, icon in ERROR_STYLES:
         if isinstance(exc, cls):
             message = str(exc)
+            if isinstance(exc, pipeline.InvalidAPIKeyError) and own_key_used:
+                message = (f"{message} This is the key entered in the sidebar: correct it, or "
+                           "clear it to use the demo's shared key.")
             if isinstance(exc, POINT_TO_QUICK_PICKS):
                 message = f"{message} {QUICK_PICK_HINT}"
             st.session_state.error = (title, message, icon)
@@ -290,7 +294,7 @@ def run_live(kind: str, raw_value: str) -> None:
         with st.spinner("Fetching and analyzing… this can take a few seconds."):
             result = _cached_analysis(kind, value, _api_key=own_key or shared_key, _misses=misses)
     except Exception as exc:  # never show a stack trace in the UI
-        _set_error(exc)
+        _set_error(exc, own_key_used=own_key is not None)
         return
     st.session_state.result = result
     st.session_state.origin = "live" if misses else "cached"

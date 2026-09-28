@@ -20,6 +20,7 @@ from extractor import (  # noqa: F401  (error types re-exported for the UI)
     MAX_INPUT_CHARS,
     MODEL_CHAIN,
     AllModelsUnavailableError,
+    InvalidAPIKeyError,
     EmptyInputError,
     ExtractionAPIError,
     ExtractionError,

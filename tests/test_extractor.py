@@ -233,3 +233,36 @@ def test_exhausted_chain_records_codes_and_words_message(codes, quota, phrase):
     assert err.codes == codes and len(codes) == len(MODEL_CHAIN)
     assert err.quota_exhausted is quota
     assert phrase in str(err)
+
+
+
+def _invalid_key_error():
+    return errors.ClientError(400, {"error": {
+        "code": 400, "message": "API key not valid. Please pass a valid API key.",
+        "status": "INVALID_ARGUMENT",
+        "details": [{"@type": "type.googleapis.com/google.rpc.ErrorInfo", "reason": "API_KEY_INVALID"}],
+    }})
+
+
+def test_invalid_key_raises_specific_error_without_fallback():
+    from extractor import InvalidAPIKeyError
+    client = FakeClient(_invalid_key_error(), json.dumps(VALID))
+    with pytest.raises(InvalidAPIKeyError, match="rejected the API key") as exc_info:
+        extract_facts("text", client=client)
+    assert exc_info.value.code == 400
+    assert len(client.models.calls) == 1  # a bad key is not worth trying on other models
+
+
+@pytest.mark.parametrize("code", [401, 403])
+def test_auth_failures_are_invalid_key_errors(code):
+    from extractor import InvalidAPIKeyError
+    with pytest.raises(InvalidAPIKeyError):
+        extract_facts("text", client=FakeClient(errors.ClientError(code, {"error": {"message": "denied"}})))
+
+
+def test_other_400s_are_not_treated_as_bad_keys():
+    from extractor import InvalidAPIKeyError
+    bad_request = errors.ClientError(400, {"error": {"message": "Invalid schema", "status": "INVALID_ARGUMENT"}})
+    with pytest.raises(ExtractionAPIError) as exc_info:
+        extract_facts("text", client=FakeClient(bad_request))
+    assert not isinstance(exc_info.value, InvalidAPIKeyError)
