@@ -70,6 +70,10 @@ class ExtractionAPIError(ExtractionError):
         self.code = code
 
 
+class AllModelsUnavailableError(ExtractionAPIError):
+    """Every model in MODEL_CHAIN hit a quota, overload or deadline error."""
+
+
 class MalformedExtractionError(ExtractionError):
     """The model's output failed JSON parsing or schema validation twice."""
 
@@ -243,18 +247,23 @@ def _call_with_fallback(client: Any, models: Sequence[str], contents: str) -> tu
             last_error = exc
     if last_error is None:
         raise ValueError("models must not be empty")
-    raise ExtractionAPIError(
+    raise AllModelsUnavailableError(
         "Every configured Gemini model is rate-limited, out of quota or overloaded. "
         "Try again later; the free tier also caps requests per day.",
         code=last_error.code,
     ) from last_error
 
 
+def make_client(api_key: str) -> Any:
+    """A Gemini client for the given key (the server's, or a visitor's own)."""
+    return genai.Client(api_key=api_key, http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
+
+
 def _default_client() -> Any:
     key = os.getenv("GEMINI_API_KEY")
     if not key:
         raise ExtractionAPIError("GEMINI_API_KEY is not set. Add it to your .env file.")
-    return genai.Client(api_key=key, http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS))
+    return make_client(key)
 
 
 def extract_facts(

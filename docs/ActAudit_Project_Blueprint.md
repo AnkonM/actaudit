@@ -290,7 +290,14 @@ actaudit/
   - Live pasted-text check (real Gemini call through the app): a short fictional loan-approval description → `essential_services`, `fully_autonomous` → High-Risk, Rule 4
 
 ### Phase 7 — Polish & Deploy
-- [ ] Visual pass on the Streamlit UI (spacing, color consistency, badge styling)
+- [x] Visual pass on the Streamlit UI (spacing, color consistency, badge styling) — Phase 7A:
+  - Tier badge: tier name, icon and subtitle always shown as text (never colour alone); Prohibited (⛔, dark red, double white border, "Banned practice under EU AI Act Art. 5") is distinct from High-Risk (⚠️, red, "Allowed, with strict obligations"); fixed high-contrast colours so it reads the same in light and dark themes
+  - Result order: badge + trust caption beside "Why this tier" (justification and provision on separate lines), then principles beside the facts table, then the raw-source toggle; wide layout; one small CSS block for the badge only
+  - Two-sentence extract-then-classify intro; persistent notice under the title ("Educational decision-support tool implementing a simplified subset of the EU AI Act. Not legal advice or a compliance certification.") with an expander listing the Section 6.2 simplifications and Section 9 limitations
+  - Trust signals: caption names the answering model and whether the result is live, cached or a recorded example; if the answering model isn't `MODEL_CHAIN[0]`, a caption warns a fallback model answered and extraction may be less accurate
+  - Quota protection for the public deployment: `st.cache_data` keyed on (input kind, cleaned input) with a 24h TTL, so repeat submissions never spend quota twice; a cap of 5 live analyses per session on the shared key (cache hits and failed analyses don't count), with a message pointing to the quick-picks; an optional sidebar field for a visitor's own Gemini key (password field, session memory only, passed as an `_`-prefixed argument so it is never part of a cache key, never logged or written to disk), which overrides the shared key and lifts the cap; a dedicated `AllModelsUnavailableError` whose message points to the quick-picks
+  - `app.py` still imports only `pipeline.py`, which now re-exports `MODEL_CHAIN`, `AllModelsUnavailableError` and a `make_client`-backed `api_key` parameter on `analyze_github`/`analyze_text`
+  - Tests: `tests/test_app.py` covers the cache, the session cap, the BYO-key path (fake client, no real key), fallback caption, exhausted-chain message, badge distinction and section order
 - [ ] Deploy to Streamlit Community Cloud / HF Spaces
 - [ ] Smoke-test the deployed link end-to-end (env vars carry over correctly, no localhost-only assumptions)
 
@@ -317,4 +324,5 @@ actaudit/
 
 - ~~Exact EU AI Act article/annex numbers in the rule table are unverified placeholders~~ — resolved: citations audited against Regulation (EU) 2024/1689 (Section 6.2 / 6.2.1).
 - Whether `human_on_loop` vs `human_in_loop` distinction is worth the added extraction complexity, or should be collapsed to a boolean `has_human_oversight` — current schema keeps the 3-way enum for richer justification text; revisit if extraction accuracy on this field proves unreliable in Phase 3 testing.
+- TidyTabs fixture has no evidence snippet for decision_autonomy; consider requiring a snippet for every non-default field in the extraction prompt. Not fixed to avoid re-recording quota.
 - PDF export and batch mode are explicitly stretch-only — do not let them creep into the Phase 1–7 critical path.

@@ -16,3 +16,7 @@ venv/
 
 # Windows download metadata (WSL)
 *:Zone.Identifier
+
+#agent specific
+.agents/skills
+.claude/skills

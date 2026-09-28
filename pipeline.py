@@ -18,12 +18,15 @@ import requests
 from examples.quick_picks import QUICK_PICKS
 from extractor import (  # noqa: F401  (error types re-exported for the UI)
     MAX_INPUT_CHARS,
+    MODEL_CHAIN,
+    AllModelsUnavailableError,
     EmptyInputError,
     ExtractionAPIError,
     ExtractionError,
     ExtractionResult,
     MalformedExtractionError,
     extract_with_details,
+    make_client,
     prepare_llm_text,
 )
 from github_fetch import (  # noqa: F401  (error types re-exported for the UI)
@@ -91,15 +94,29 @@ def _assemble(
     )
 
 
+def _client_for(client: Any, api_key: str | None) -> Any:
+    """An explicit client wins; else a visitor's own key; else the server key (default)."""
+    if client is None and api_key:
+        return make_client(api_key)
+    return client
+
+
 def analyze_github(
-    url: str, client: Any = None, session: requests.Session | None = None
+    url: str,
+    client: Any = None,
+    session: requests.Session | None = None,
+    api_key: str | None = None,
 ) -> AnalysisResult:
     readme = fetch_readme(url, session=session)
-    return _analyze("github", f"{readme.owner}/{readme.repo}", readme.text, readme, client)
+    return _analyze(
+        "github", f"{readme.owner}/{readme.repo}", readme.text, readme, _client_for(client, api_key)
+    )
 
 
-def analyze_text(text: str, client: Any = None) -> AnalysisResult:
-    return _analyze("text", "Pasted text", clean_pasted_text(text or ""), None, client)
+def analyze_text(text: str, client: Any = None, api_key: str | None = None) -> AnalysisResult:
+    return _analyze(
+        "text", "Pasted text", clean_pasted_text(text or ""), None, _client_for(client, api_key)
+    )
 
 
 def quick_pick_labels() -> list[str]:
