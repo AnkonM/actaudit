@@ -6,7 +6,7 @@ Paste a public GitHub repository URL or any piece of documentation (a README, a 
 
 > **Educational decision-support tool implementing a simplified subset of the EU AI Act. Not legal advice or a compliance certification.**
 
-<!-- Live demo: add the deployed Streamlit link here -->
+**Live demo:** https://act-audit.streamlit.app/
 
 ## How it works: the LLM reads, the rules decide
 
