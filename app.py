@@ -187,7 +187,7 @@ ERROR_STYLES: list[tuple[type[Exception], str, str]] = [
     (pipeline.RateLimitedError, "GitHub is rate-limiting requests", ":material/hourglass_top:"),
     (pipeline.NetworkError, "Couldn't reach GitHub", ":material/wifi_off:"),
     (pipeline.EmptyInputError, "Nothing to analyze", ":material/edit_note:"),
-    (pipeline.AllModelsUnavailableError, "All Gemini models are out of quota or busy", ":material/cloud_off:"),
+    (pipeline.AllModelsUnavailableError, "All Gemini models are out of quota or busy", ":material/cloud_off:"),  # retitled in _set_error
     (pipeline.ExtractionAPIError, "The Gemini API is unavailable", ":material/cloud_off:"),
     (pipeline.MalformedExtractionError, "The model returned unusable output", ":material/report:"),
 ]
@@ -230,6 +230,14 @@ def _clear_output() -> None:
 
 
 def _set_error(exc: Exception) -> None:
+    if isinstance(exc, pipeline.AllModelsUnavailableError) and not exc.quota_exhausted:
+        # Only overload/deadline errors: say so, rather than implying quota ran out.
+        st.session_state.error = (
+            "Gemini is overloaded right now",
+            f"{exc} {QUICK_PICK_HINT}",
+            ":material/hourglass_top:",
+        )
+        return
     for cls, title, icon in ERROR_STYLES:
         if isinstance(exc, cls):
             message = str(exc)

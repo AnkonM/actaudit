@@ -115,7 +115,7 @@ def test_missing_field_is_retried():
 def test_api_error_is_not_retried_on_same_model():
     err = errors.ClientError(429, {"error": {"message": "quota", "status": "RESOURCE_EXHAUSTED"}})
     client = FakeClient(err)
-    with pytest.raises(ExtractionAPIError, match="rate-limited, out of quota") as exc_info:
+    with pytest.raises(ExtractionAPIError, match="rate-limited or out of quota") as exc_info:
         extract_facts("text", client=client, models=["gemini-3.8-flash"])
     assert exc_info.value.code == 429
     assert len(client.models.calls) == 1
@@ -215,3 +215,21 @@ def test_transport_failure_becomes_extraction_api_error():
         extract_facts("text", client=client)
     assert exc_info.value.code is None
     assert len(client.models.calls) == 1
+
+
+
+@pytest.mark.parametrize("codes,quota,phrase", [
+    ((429, 429, 429, 429), True, "rate-limited or out of quota"),
+    ((503, 503, 503, 503), False, "temporarily overloaded"),
+    ((503, 429, 504, 503), True, "rate-limited or out of quota"),  # any 429 means quota
+    ((504, 503, 504, 503), False, "temporarily overloaded"),
+])
+def test_exhausted_chain_records_codes_and_words_message(codes, quota, phrase):
+    from extractor import AllModelsUnavailableError, MODEL_CHAIN
+    client = FakeClient(*[_api_error(c) for c in codes])
+    with pytest.raises(AllModelsUnavailableError) as exc_info:
+        extract_facts("text", client=client)
+    err = exc_info.value
+    assert err.codes == codes and len(codes) == len(MODEL_CHAIN)
+    assert err.quota_exhausted is quota
+    assert phrase in str(err)

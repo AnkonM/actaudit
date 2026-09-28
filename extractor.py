@@ -73,6 +73,15 @@ class ExtractionAPIError(ExtractionError):
 class AllModelsUnavailableError(ExtractionAPIError):
     """Every model in MODEL_CHAIN hit a quota, overload or deadline error."""
 
+    def __init__(self, message: str, code: int | None = None, codes: tuple[int | None, ...] = ()):
+        super().__init__(message, code=code)
+        self.codes = codes  # one status code per model tried, in order
+
+    @property
+    def quota_exhausted(self) -> bool:
+        """True if any model reported a quota/rate limit (429), not just overload."""
+        return 429 in self.codes
+
 
 class MalformedExtractionError(ExtractionError):
     """The model's output failed JSON parsing or schema validation twice."""
@@ -238,6 +247,7 @@ def _call(client: Any, model: str, contents: str) -> str | None:
 def _call_with_fallback(client: Any, models: Sequence[str], contents: str) -> tuple[str | None, str]:
     """Try each model in order, moving on only for quota/overload errors."""
     last_error: ExtractionAPIError | None = None
+    codes: list[int | None] = []
     for model in models:
         try:
             return _call(client, model, contents), model
@@ -245,13 +255,21 @@ def _call_with_fallback(client: Any, models: Sequence[str], contents: str) -> tu
             if exc.code not in FALLBACK_STATUS_CODES:
                 raise
             last_error = exc
+            codes.append(exc.code)
     if last_error is None:
         raise ValueError("models must not be empty")
-    raise AllModelsUnavailableError(
-        "Every configured Gemini model is rate-limited, out of quota or overloaded. "
-        "Try again later; the free tier also caps requests per day.",
-        code=last_error.code,
-    ) from last_error
+    if 429 in codes:
+        message = (
+            "Every configured Gemini model is rate-limited or out of quota. The free tier "
+            "caps requests per minute and per day, so try again later."
+        )
+    else:
+        # Only 503/504: Google-side overload or deadline, usually brief.
+        message = (
+            "Every configured Gemini model is temporarily overloaded on Google's side "
+            "(high demand). This usually clears within a few minutes; please try again."
+        )
+    raise AllModelsUnavailableError(message, code=last_error.code, codes=tuple(codes)) from last_error
 
 
 def make_client(api_key: str) -> Any:

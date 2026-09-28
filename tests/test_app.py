@@ -354,7 +354,10 @@ def test_repo_not_found_warning(monkeypatch):
     (pipeline.RateLimitedError("x"), "GitHub is rate-limiting requests"),
     (pipeline.NetworkError("x"), "Couldn't reach GitHub"),
     (pipeline.ExtractionAPIError("x", code=401), "The Gemini API is unavailable"),
-    (pipeline.AllModelsUnavailableError("x", code=429), "All Gemini models are out of quota or busy"),
+    (pipeline.AllModelsUnavailableError("x", code=429, codes=(429, 429, 429, 429)),
+     "All Gemini models are out of quota or busy"),
+    (pipeline.AllModelsUnavailableError("x", code=503, codes=(503, 503, 503, 503)),
+     "Gemini is overloaded right now"),
     (pipeline.MalformedExtractionError("x"), "The model returned unusable output"),
     (RuntimeError("boom"), "Something went wrong"),
 ])
@@ -369,6 +372,18 @@ def test_each_error_type_gets_a_specific_warning(monkeypatch, error, title):
     assert warning.icon.startswith(":material/")
     points_to_quick_picks = "**Try an example** still work" in warning.value
     assert points_to_quick_picks == isinstance(error, pipeline.ExtractionAPIError)
+
+
+def test_all_models_overloaded_says_overloaded_not_quota(monkeypatch):
+    overloaded = errors.ServerError(503, {"error": {"message": "high demand", "status": "UNAVAILABLE"}})
+    counting_fake(monkeypatch, *[overloaded] * len(pipeline.MODEL_CHAIN))
+    at = paste(run_app(), "HireBot ranks job applicants automatically.")
+    warning = at.warning[0]
+    assert alert_title(warning) == "Gemini is overloaded right now"
+    assert "temporarily overloaded on Google's side" in warning.value
+    assert "quota" not in warning.value.lower()
+    assert "**Try an example** still work" in warning.value
+    assert "0 of 5" in all_text(at)
 
 
 def test_all_models_exhausted_points_to_quick_picks(monkeypatch):
