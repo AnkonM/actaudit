@@ -6,16 +6,18 @@ model setting comes through it. Run with: streamlit run app.py
 Styling is native (theme in .streamlit/config.toml) except for one marked CSS block
 used only by the verdict banner.
 """
+import os
 from dataclasses import dataclass, fields
 from enum import Enum
 from urllib.parse import quote
 
 import streamlit as st
 from dotenv import load_dotenv
+from streamlit.errors import StreamlitSecretNotFoundError
 
 import pipeline
 
-load_dotenv()
+load_dotenv()  # local development only; a missing .env is fine
 
 LIVE_CAP = 5  # live analyses per session on the shared key (cache hits don't count)
 CACHE_TTL = "24h"
@@ -241,9 +243,29 @@ def _set_error(exc: Exception) -> None:
     )
 
 
+def server_key() -> str | None:
+    """The shared Gemini key: the platform's secrets first (st.secrets), then the
+    environment (a local .env). Never shown, logged or cached."""
+    try:
+        key = st.secrets.get("GEMINI_API_KEY")
+    except StreamlitSecretNotFoundError:  # no secrets.toml, e.g. local development
+        key = None
+    return (key or os.getenv("GEMINI_API_KEY") or "").strip() or None
+
+
 def run_live(kind: str, raw_value: str) -> None:
     _clear_output()
     own_key = (st.session_state.get("byo_key") or "").strip() or None
+    shared_key = server_key()
+    if own_key is None and shared_key is None:
+        st.session_state.error = (
+            "Live analysis isn't set up on this deployment",
+            "No shared Gemini API key is configured. Add your own key in the sidebar to "
+            "analyze your own input, or use the examples under **Try an example**, which "
+            "need no key.",
+            ":material/key_off:",
+        )
+        return
     used = st.session_state.live_count
     if own_key is None and used >= LIVE_CAP:
         st.session_state.error = (
@@ -258,7 +280,7 @@ def run_live(kind: str, raw_value: str) -> None:
     misses: list = []
     try:
         with st.spinner("Fetching and analyzing… this can take a few seconds."):
-            result = _cached_analysis(kind, value, _api_key=own_key, _misses=misses)
+            result = _cached_analysis(kind, value, _api_key=own_key or shared_key, _misses=misses)
     except Exception as exc:  # never show a stack trace in the UI
         _set_error(exc)
         return

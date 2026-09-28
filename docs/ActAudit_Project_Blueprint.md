@@ -303,6 +303,11 @@ actaudit/
   - Rule table tab: shows `Rule.condition_text` (new field in `rules.py`, mirrors Section 6.2 word for word, enforced by `test_condition_text_mirrors_blueprint_rule_table`) via `pipeline.rule_table()`
   - Unchanged behaviour carried over from 7A: pipeline-only imports in `app.py`, `st.cache_data` on live analyses (24h, keyed on input only), 5-analysis session cap, bring-your-own key (session memory only), all error states with specific titled alerts and no stack traces, fallback-model caption
   - Verified in headless Chromium (Playwright, dev-only) in light and dark themes for every state; tests: `tests/test_app.py` (46 AppTest tests)
+- [x] Deployment prep (Phase 7B) for Streamlit Community Cloud:
+  - `requirements.txt` pinned to the tested runtime versions (streamlit 1.64.0, requests 2.34.2, python-dotenv 1.2.3, google-genai 2.25.0); test tools moved to `requirements-dev.txt`; `.python-version` = 3.12. Verified by a clean install in a fresh venv and the full suite passing in a copy of the repo with no `.venv` and no `.env`
+  - Shared key: `app.py` reads `st.secrets["GEMINI_API_KEY"]` first, then the `GEMINI_API_KEY` environment variable (local `.env`), and passes it explicitly to the pipeline; a visitor's own key overrides it. With no key anywhere, live analysis shows a friendly "not set up" state and the quick-picks still work (verified by booting the clean copy with no key)
+  - `.streamlit/secrets.toml` gitignored; `.streamlit/secrets.toml.example` documents the format; no absolute paths in shipped code
+  - `README.md`: what ActAudit is, the extract-then-classify design and why, setup/run/test, deployment, rule table summary, limitations (Sections 6.2 and 9), screenshots placeholder, disclaimer
 - [ ] Deploy to Streamlit Community Cloud / HF Spaces
 - [ ] Smoke-test the deployed link end-to-end (env vars carry over correctly, no localhost-only assumptions)
 

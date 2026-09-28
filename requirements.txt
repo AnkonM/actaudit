@@ -1,5 +1,6 @@
-streamlit>=1.30
-requests>=2.31
-python-dotenv>=1.0
-google-genai>=1.0
-pytest>=8.0
+# Runtime dependencies, pinned to the versions ActAudit is tested with.
+# Development/test-only tools are in requirements-dev.txt.
+streamlit==1.64.0
+requests==2.34.2
+python-dotenv==1.2.3
+google-genai==2.25.0

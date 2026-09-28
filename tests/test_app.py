@@ -21,6 +21,7 @@ from tests.test_github_fetch import FakeSession
 ROOT = Path(__file__).resolve().parent.parent
 APP = str(ROOT / "app.py")
 FAKE_KEY = "fake-visitor-key-not-real-0000"
+FAKE_SERVER_KEY = "fake-server-key-not-real-1111"
 TIERS = {
     # tier: (css modifier, banner label, quick-pick / native icon)
     "Prohibited": ("prohibited", "Prohibited practice", ":material/block:"),
@@ -44,6 +45,22 @@ def _clear_cache():
     st.cache_data.clear()
     yield
     st.cache_data.clear()
+
+
+@pytest.fixture(autouse=True)
+def client_keys(monkeypatch):
+    """A fake shared key in the environment (load_dotenv never overrides it, so a
+    developer's real .env is never used) and a record of every key the pipeline
+    builds a Gemini client with. Tests may re-patch make_client."""
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_SERVER_KEY)
+    keys: list[str] = []
+
+    def recording_make_client(api_key):
+        keys.append(api_key)
+        return FakeClient()  # never used for calls: counting_fake replaces extraction
+
+    monkeypatch.setattr(pipeline, "make_client", recording_make_client)
+    return keys
 
 
 # --- Helpers -----------------------------------------------------------------
@@ -447,14 +464,60 @@ def test_byo_key_is_never_rendered(monkeypatch):
     assert all(FAKE_KEY not in c.value for c in at.code)
 
 
-def test_blank_byo_key_falls_back_to_shared_key(monkeypatch):
-    monkeypatch.setattr(pipeline, "make_client", lambda api_key: pytest.fail("must not build a BYO client"))
+def test_blank_byo_key_falls_back_to_shared_key(monkeypatch, client_keys):
     counting_fake(monkeypatch, json.dumps(VALID))
     at = run_app()
     at.sidebar.text_input(key="byo_key").input("   ").run()
     at = paste(at, "HireBot ranks job applicants automatically.")
     assert banner_tier(at) == "High-Risk"
+    assert client_keys == [FAKE_SERVER_KEY]
     assert "1 of 5" in all_text(at)
+
+
+# --- Shared key: st.secrets first, environment fallback ---------------------------
+
+def test_shared_key_comes_from_environment_when_no_secrets(monkeypatch, client_keys):
+    counting_fake(monkeypatch, json.dumps(VALID))
+    at = paste(run_app(), "HireBot ranks job applicants automatically.")
+    assert not at.warning
+    assert client_keys == [FAKE_SERVER_KEY]
+
+
+def test_st_secrets_take_precedence_over_environment(monkeypatch, client_keys):
+    counting_fake(monkeypatch, json.dumps(VALID))
+    at = AppTest.from_file(APP, default_timeout=30)
+    at.secrets["GEMINI_API_KEY"] = "fake-key-from-st-secrets"
+    at.run()
+    at = paste(at, "HireBot ranks job applicants automatically.")
+    assert not at.warning
+    assert client_keys == ["fake-key-from-st-secrets"]
+
+
+def test_byo_key_overrides_the_shared_key(monkeypatch, client_keys):
+    counting_fake(monkeypatch, json.dumps(VALID))
+    at = run_app()
+    at.sidebar.text_input(key="byo_key").input(FAKE_KEY).run()
+    paste(at, "HireBot ranks job applicants automatically.")
+    assert client_keys == [FAKE_KEY]
+
+
+def test_no_key_anywhere_gives_a_friendly_state(monkeypatch, client_keys):
+    # Empty, not deleted: a deleted variable would let load_dotenv() pull in a real .env.
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    fake = counting_fake(monkeypatch)  # any API call would fail: no responses scripted
+    at = paste(run_app(), "HireBot ranks job applicants automatically.")
+    assert not at.exception
+    assert alert_title(at.warning[0]) == "Live analysis isn't set up on this deployment"
+    assert "**Try an example**" in at.warning[0].value
+    assert fake.models.calls == [] and client_keys == []
+    at.button(key="qp_HTTP utility library").click().run()  # quick-picks need no key
+    assert banner_tier(at) == "Limited-Risk"
+
+
+def test_server_key_is_never_rendered(monkeypatch):
+    counting_fake(monkeypatch, json.dumps(VALID))
+    at = paste(run_app(), "HireBot ranks job applicants automatically.")
+    assert FAKE_SERVER_KEY not in all_text(at) and FAKE_SERVER_KEY not in banner(at)
 
 
 # --- Trust signals -------------------------------------------------------------------

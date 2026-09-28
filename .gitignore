@@ -20,3 +20,5 @@ venv/
 #agent specific
 .agents/skills
 .claude/skills
+# Streamlit secrets (the deployed key lives in the platform, never in the repo)
+.streamlit/secrets.toml
