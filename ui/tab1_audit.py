@@ -59,6 +59,8 @@ ORIGIN_TEXT = {
     "fixture": "recorded example (no live API call)",
     "cached": "cached result (no new API call)",
     "live": "live analysis",
+    # Only set by scripts/screenshot_harness.py (dev-only) for facts written by hand.
+    "handbuilt": "hand-built facts (no model call)",
 }
 
 
@@ -223,7 +225,9 @@ def render_verdict(result) -> None:
         with hero:
             st.html(verdict_banner_html(c.tier.value))
             with st.container(horizontal=True, gap="small"):
-                if origin == "fixture":
+                if origin == "handbuilt":
+                    st.badge("Hand-built facts (not an extraction)", icon=":material/edit:", color="gray")
+                elif origin == "fixture":
                     st.badge("Recorded example", icon=":material/history:", color="blue")
                 elif origin == "cached":
                     st.badge("Cached result", icon=":material/bolt:", color="blue")

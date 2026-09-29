@@ -6,7 +6,7 @@ Paste a public GitHub repository URL or any piece of documentation (a README, a 
 
 > **Educational decision-support tool implementing a simplified subset of the EU AI Act. Not legal advice or a compliance certification.**
 
-**Live demo:** https://act-audit.streamlit.app/
+**Live demo:** https://act-audit.streamlit.app/ (runs the `main` branch; the eight experiment tabs described below are on `feature/experiment-tabs` until merged)
 
 ## How it works: the LLM reads, the rules decide
 
@@ -17,6 +17,23 @@ Asking an LLM "is this system high-risk?" gives an answer that can't be audited 
 3. **Explain the tier.** The result shows the justification, the legal provision, the rule table with the deciding rule marked, the extracted facts with their evidence, and UNESCO/IEEE principle flags.
 
 This split means the unreliable part (reading messy text) is limited to producing a small structured object that you can inspect, while the decision itself is fully reproducible and cites its source.
+
+## Eight experiment tabs
+
+The app is organised as one tab per course experiment. Every tab uses the same design: the LLM only extracts facts, and every judgment comes from fixed rules or plain computation, with the thresholds shown next to the results.
+
+| Tab | Course experiment | What it does |
+|---|---|---|
+| 1 · System Audit | Experiment 1 — Ethical Analysis of AI Applications | The audit above, plus affected parties and harm categories (allocative, quality-of-service, representational, privacy, autonomy/dignity) from a published rule table |
+| 2 · Dataset Bias | Experiment 2 — Detecting Dataset Bias in AI System | Representation, reference shares, intersectional counts, missingness and label base rates by group for an uploaded CSV or a bundled demo, with rule-generated findings |
+| 3 · Synthetic Media | Experiment 3 — Deepfake Vulnerability Assessment and Ethical Analysis | Synthetic-media capabilities, whether AI Act Art. 50(2) and 50(4) apply, a misuse-vulnerability matrix and an ethical analysis |
+| 4 · Proxy Audit | Experiment 4 — Auditing the "Cost-as-a-Proxy" Resource Bias | Whether the system's target is a known proxy, which columns stand in for a protected attribute (Cramér's V, correlation ratio, a reconstruction test), and a synthetic Obermeyer-style cost-vs-need demo |
+| 5 · Fairness & Explainability | Experiment 5 — Implementing AI Fairness and Explainability Dashboard | Fairness metrics with fairlearn (selection rate, TPR, FPR, parity and odds differences, four-fifths rule), and ActAudit's own rule trace with a what-if explorer |
+| 6 · Impact Assessment | Experiment 6 — Operationalizing UNESCO & IEEE Frameworks via Algorithmic Impact Assessments | UNESCO/IEEE flags, an assessment structured by AI Act Art. 27(1), a project-defined impact level I–IV, recommended actions, and Markdown/PDF reports |
+| 7 · Robustness & Autonomy | Experiment 7 — Autonomous Target Selection and System Degradation Auditing | Scope (Art. 2(3)), autonomy and Art. 14/15 documentation checks, and a recorded study of how ActAudit's own verdicts hold up under model swaps, information loss and prompt injection |
+| 8 · Case Library | Experiment 8 — Case Study on AI Ethics and Regulations | Seven documented incidents (COMPAS, Amazon recruiting, the Obermeyer algorithm, Clearview AI, the Dutch childcare benefits scandal, the Arup deepfake call, HireVue) run through ActAudit, with sources and "Would the AI Act have caught this?" |
+
+A system loaded in any tab (a live audit, an example or a case) is shared by all of them, and so is a loaded dataset; the line under the title shows what is currently loaded. Screenshots of every tab in both themes are in [`docs/screenshots/experiment-tabs/`](docs/screenshots/experiment-tabs/), and the hand-off report is [`docs/EXPERIMENT_TABS_REPORT.md`](docs/EXPERIMENT_TABS_REPORT.md).
 
 ## Screenshots
 
@@ -42,7 +59,7 @@ cp .env.example .env        # then paste your Gemini API key into .env
 streamlit run app.py
 ```
 
-You can get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/). The six example buttons in the app work **without** a key or network access, because they load recorded results.
+You can get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/). The example buttons in the app work **without** a key or network access, because they load recorded results; the demo datasets are bundled in `data/`.
 
 Run the tests (offline, no key needed):
 
@@ -51,6 +68,14 @@ pytest
 ```
 
 One live end-to-end test is skipped by default. Run it with `ACTAUDIT_LIVE=1 pytest`; it uses one Gemini request.
+
+Recorded examples, Case Library analyses and the robustness study are recorded with the project key by one resumable command, which paces its requests, skips anything already recorded and stops cleanly when the free-tier quota runs out:
+
+```bash
+python scripts/record_all.py
+```
+
+The demo datasets are rebuilt, byte for byte, by `python scripts/make_demo_datasets.py` (sources, licences and seeds in [`data/README.md`](data/README.md)).
 
 ## Deploy
 
@@ -76,6 +101,7 @@ Rules are checked in order and the first match decides the tier. Citations were 
 
 | # | Applies when | Tier | Provision |
 |---|---|---|---|
+| 0 | Exclusively military, defence or national-security use | Out of scope | Art. 2(3) (the Act doesn't apply; principle flags still shown) |
 | 1 | Real-time biometric identification in public spaces, for law enforcement | Prohibited | Art. 5(1)(h) |
 | 2 | Social scoring | Prohibited | Art. 5(1)(c) |
 | 3 | Emotion inference in education or hiring | Prohibited | Art. 5(1)(f) |
@@ -96,13 +122,21 @@ Rule 4 applies regardless of human oversight: under Art. 6(2), membership of an 
 - **README only.** ActAudit reads documentation, not code or data. It handles English only, fetches READMEs from the `main` or `master` branch of public repositories, and truncates text over about 8,000 characters for the model (the full text is still shown).
 - **Extraction can be wrong.** An LLM extracts the facts, and older fallback models are less accurate. Every extracted fact and its evidence is shown so you can check it.
 - **Thin documentation is a finding.** When a README says little, extraction confidence drops and the app says so. Documentation completeness is itself an accountability mechanism.
+- **Project-defined measures.** The harm mapping, the misuse matrix, the impact level (inspired by, but not, Canada's Algorithmic Impact Assessment scoring) and the statistical thresholds are project choices, labelled as such in the app.
+- **Case Library tiers** are ActAudit's reading of a neutral system description, not legal findings about the incidents; the Act is not retroactive.
 - **No legal validity.** ActAudit is a decision-support and educational tool, not a compliance certification.
 
 ## Project structure
 
 ```
-app.py            Streamlit dashboard (UI only; talks to the backend through pipeline.py)
-pipeline.py       fetch → extract → rules → principles
+app.py            Streamlit entry point: header, the eight tabs, sidebar
+ui/               one module per tab + shared components (UI only; backend via pipeline.py)
+analysis/         pure analysis modules for the tabs (harms, data bias, proxies, fairness,
+                  synthetic media, impact assessment, autonomy, robustness, case library)
+                  and config.py, which holds every threshold
+data/             demo datasets, the Case Library, robustness-study runs (see data/README.md)
+scripts/          recording (record_all.py), demo datasets, robustness study, screenshots
+pipeline.py       fetch → extract → rules → principles; the UI's only backend interface
 github_fetch.py   README fetch from GitHub, with specific errors
 extractor.py      Gemini extraction: prompt, schema-constrained JSON, retry, model fallback
 schema.py         the extraction schema (the LLM's output contract)
