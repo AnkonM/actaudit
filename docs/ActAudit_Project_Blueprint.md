@@ -143,6 +143,7 @@ Fixtures record `schema_version`. The fixture loader accepts older fixtures by f
 
 | # | Condition | Tier | Cited provision | Verified? |
 |---|---|---|---|---|
+| 0 | `military_defence_use == true` | **Out of scope** | Art. 2(3), second subparagraph — the Regulation "does not apply to AI systems where and in so far they are placed on the market, put into service, or used with or without modification exclusively for military, defence or national security purposes". Evaluated before all other rules (experiment tabs, Section 15) | Yes |
 | 1 | `real_time_biometric_public == true and deployment_domain == law_enforcement` | **Prohibited** | Art. 5(1)(h) — real-time remote biometric identification in publicly accessible spaces "for the purposes of law enforcement" (narrow statutory exceptions exist, not modeled here) | Yes |
 | 2 | `social_scoring == true` | **Prohibited** | Art. 5(1)(c) — social scoring. No "public authorities" restriction in the final text: any scoring based on social behaviour or personal characteristics that leads to detrimental treatment is covered | Yes |
 | 3 | `emotion_inference == true and deployment_domain in [education, hiring]` | **Prohibited** | Art. 5(1)(f) — inferring emotions "in the areas of workplace and education institutions," except for medical/safety reasons. Does not require biometric data | Yes |
@@ -158,10 +159,10 @@ Fixtures record `schema_version`. The fixture loader accepts older fixtures by f
 
 **Remaining acknowledged simplifications:** Rule 1's Art. 5(1)(h) statutory exceptions (victim search, imminent threat-to-life with judicial authorization) are not modeled. Rule 4 doesn't model the Art. 6(3) narrow-task exemption at all — every named-domain system is High-Risk here, over-inclusive relative to real Art. 6(3) carve-outs but not misleading. Rules 5, 7, and 8 are project-invented heuristics layered on the Act's actual tiers, explicitly labeled as such.
 
-**Rule 0 (experiment tabs; enters the table above in Phase 10, in the same commit as the code, because `tests/test_rules.py` mirrors the table):** evaluated before all others — `military_defence_use == true` → new tier **Out of scope**, citing Art. 2(3) (exclusion of AI systems placed on the market, put into service or used exclusively for military, defence or national-security purposes; wording to be verified against EUR-Lex). Justification states that the Act does not apply and that the UNESCO/IEEE principle flags are still shown. The verdict banner gets a neutral grey style with its own icon and label. `classify()` is otherwise unchanged; `classify_with_trace()` returns every rule in order, fired or not, with the condition that failed (Section 15).
+**Rule 0 (experiment tabs, added in Phase 10):** `military_defence_use == true` → new tier **Out of scope**, evaluated before every other rule. Verified against the Official Journal text of Regulation (EU) 2024/1689 (retrieved from the EU Publications Office's CELLAR repository, the same document EUR-Lex serves): Art. 2(3), second subparagraph, excludes AI systems placed on the market, put into service or used *exclusively* for military, defence or national-security purposes, "regardless of the type of entity carrying out those activities". The extraction field is therefore defined as *exclusive* military/defence/national-security use; dual-use systems extract as `false` and are classified by the other rules. The justification states that the Act doesn't apply and that the UNESCO/IEEE principle flags are still shown. Acknowledged simplification: the third subparagraph (systems not placed on the EU market whose output is used in the Union exclusively for these purposes) is folded into the same field. The verdict banner shows Out of scope in neutral grey with its own icon and label. `classify()` is otherwise unchanged; `classify_with_trace()` returns every rule in order with matched / decided and each condition clause's actual value (each rule's condition is also stored as clauses, and a test checks clauses and condition always agree).
 
 ### 6.2.1 Citation verification status
-Each rule in the implemented rule table carries a `citation_verified: bool` field, now set to True on all 8 rules following the citation audit against Regulation (EU) 2024/1689 (EUR-Lex).
+Each rule in the implemented rule table carries a `citation_verified: bool` field, now set to True on all 9 rules (Rule 0 added in Phase 10) following the citation audit against Regulation (EU) 2024/1689 (EUR-Lex).
 
 ### 6.3 Justification string format (for consistency)
 ```
@@ -376,7 +377,9 @@ actaudit/
 
 ### Phases 9–16 — Experiment tabs (Section 15; branch `feature/experiment-tabs`, one commit + push per phase, never merged by the agent)
 - [x] **Phase 9** — Branch setup; this blueprint update (§5 schema v2, §6.2 Rule 0 note, §11, §12, §14 heading, §15); `docs/EXPERIMENT_TABS_REPORT.md` with progress log
-- [ ] **Phase 10** — Schema v2 + `SCHEMA_VERSION`, extraction prompt, Rule 0 + Out-of-scope tier + banner, `classify_with_trace`, fixture-loader compatibility, tests; then recording priority (1): re-record quick-pick fixtures
+- [x] **Phase 10** — Schema v2 + `SCHEMA_VERSION`, extraction prompt, Rule 0 + Out-of-scope tier + banner, `classify_with_trace`, fixture-loader compatibility, tests; then recording priority (1): re-record quick-pick fixtures
+  - Done: `schema.py` v2 (`SCHEMA_VERSION = 2`, `TargetType`, `SyntheticMediaType`, `LIST_ENUM_FIELDS`, `V2_FIELDS`, `DISPLAY_ORDER`, `ABSENT_DEFAULTS`, `upgrade_facts_dict`); extractor prompt definitions/examples + scoped confidence rule + `model=` override; Rule 0 + `RiskTier.OUT_OF_SCOPE` + clauses + `classify_with_trace`; Out-of-scope banner (grey; WCAG light 7.56, dark 9.37); `pipeline.load_example` / `example_status` / `facts_from_record` with "Recorded with an older schema" badge; 7th quick-pick (fictional military sample, disabled until recorded); `scripts/record_fixtures.py` generalised (sets, pacing, quota stop, candidates) + `scripts/record_all.py`
+  - Recording (1), partial: re-recorded on v2 with tiers unchanged — face_recognition (High, rule 6), pyresparser (High, 4), requests (Limited, 8; now low confidence), classroom_emotion_tracker (Prohibited, 3), all on `gemini-3.5-flash` (the other models were overloaded). Pending (Gemini overloaded on every model for several minutes): CheXNet, tab_grouping_extension, military_target_recognition — `python scripts/record_all.py` completes them
 - [ ] **Phase 11** — UI restructure into `ui/` with the eight tabs, captions, shared state, "Currently loaded" line; Tab 1 fully migrated + ethical analysis
 - [ ] **Phase 12** — Tabs 2, 4, 5 (shared dataset state), bundled demo datasets + generation scripts, statistics modules, what-if explorer
 - [ ] **Phase 13** — Tab 3 + examples, Tab 6 + Markdown/PDF downloads, Tab 7 section A; then recording priority (2)
@@ -417,6 +420,11 @@ Decisions made during Phases 9–16 without the project owner, one line each (re
 - Case Library data is validated in Python (`analysis/case_library.py`); a JSON Schema file is kept alongside as documentation, so no `jsonschema` dependency.
 - Robustness study: non-model perturbations run on one fixed reference model; perturbations that leave the text unchanged are recorded as "n/a" with no API call.
 - The Rule 0 row enters the §6.2 table in Phase 10 (not Phase 9) because `tests/test_rules.py` mirrors that table.
+- Re-recording an existing GitHub fixture reuses its stored README text rather than re-fetching, so any change in the extraction reflects the schema/prompt change, not an edited README.
+- Each rule's condition is also stored as clauses (field + allowed values) for `classify_with_trace()`; a test checks clauses and condition agree on every combination of the tested values, so `classify()` itself stays untouched.
+- Two `tests/test_app.py` assertions that depended on incidental fixture properties were made fixture-independent after re-recording (tiers unchanged): the "primary model shows no fallback caption" test now uses a fake live call, and the quick-pick test allows the low-confidence warning (a §9 finding; `psf/requests` now extracts with low confidence) while still forbidding every other warning.
+- `ABSENT_DEFAULTS` moved from `extractor.py` to `schema.py` (re-exported by the extractor) so the fixture loader and the extractor share one definition.
+- The recording scripts retry overload (503/504) with backoff but stop immediately on quota (429 from every model), printing the resume command.
 
 ## 15. Experiment tabs (Phases 9–16)
 

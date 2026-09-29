@@ -7,7 +7,7 @@ Styling is native (theme in .streamlit/config.toml) except for one marked CSS bl
 used only by the verdict banner.
 """
 import os
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import Enum
 from urllib.parse import quote
 
@@ -38,6 +38,7 @@ _SVG_WARNING = "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"
 _SVG_INFO = (
     "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"
 )
+_SVG_REMOVE = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z"
 _SVG_CHECK = (
     "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 "
     "1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
@@ -54,6 +55,10 @@ class TierStyle:
 
 
 TIER_STYLES: dict[str, TierStyle] = {
+    "Out of scope": TierStyle(
+        "out-of-scope", _SVG_REMOVE, ":material/do_not_disturb_on:",
+        "Outside the AI Act's scope", "Military, defence or national-security use: Art. 2(3)",
+    ),
     "Prohibited": TierStyle(
         "prohibited", _SVG_BLOCK, ":material/block:",
         "Prohibited practice", "Banned under EU AI Act Art. 5",
@@ -82,6 +87,9 @@ TIER_STYLES: dict[str, TierStyle] = {
 #   High-Risk   light #FFFFFF on #B91C1C  6.47   dark #FFFFFF on #991B1B  8.31
 #   Limited     light #422006 on #FBBF24  8.73   dark #1C1300 on #F59E0B  8.56
 #   Minimal     light #FFFFFF on #15803D  5.02   dark #F0FDF4 on #166534  6.81
+#   Out of scope light #FFFFFF on #4B5563 7.56   dark #F3F4F6 on #374151  9.37
+#     (neutral grey: the Act doesn't apply, so no risk colour; its dark fill sits
+#      close to the page, so the #9CA3AF border (7.43:1 on the page) marks the edge)
 # Borders keep the banner's edge visible (>= 5:1 against the page) where a fill
 # sits close to the page background.
 # ============================================================================
@@ -116,6 +124,11 @@ VERDICT_CSS = """
   background: #FBBF24; color: #422006; border-color: #B45309;
   background: light-dark(#FBBF24, #F59E0B); color: light-dark(#422006, #1C1300);
   border-color: light-dark(#B45309, #FCD34D);
+}
+.aa-verdict--out-of-scope {
+  background: #4B5563; color: #FFFFFF; border-color: #1F2937;
+  background: light-dark(#4B5563, #374151); color: light-dark(#FFFFFF, #F3F4F6);
+  border-color: light-dark(#1F2937, #9CA3AF);
 }
 .aa-verdict--minimal {
   background: #15803D; color: #FFFFFF; border-color: #14532D;
@@ -216,10 +229,13 @@ def _cached_analysis(kind: str, value: str, _api_key: str | None, _misses: list)
 
 
 @st.cache_data(show_spinner=False)
-def _quick_pick_tiers() -> dict[str, str]:
-    """Tier of each recorded quick-pick (static fixtures, so no TTL needed)."""
+def _quick_pick_tiers() -> dict[str, str | None]:
+    """Tier of each recorded quick-pick, None if not recorded yet (static fixtures)."""
     return {
-        label: pipeline.analyze_quick_pick(label).classification.tier.value
+        label: (
+            pipeline.analyze_quick_pick(label).classification.tier.value
+            if pipeline.quick_pick_status(label) != "not_recorded" else None
+        )
         for label in pipeline.quick_pick_labels()
     }
 
@@ -318,6 +334,8 @@ def _value_str(value) -> str:
         return value.value
     if isinstance(value, bool):
         return "true" if value else "false"
+    if isinstance(value, tuple):
+        return "[" + ", ".join(_value_str(v) for v in value) + "]"
     return str(value)
 
 
@@ -354,7 +372,11 @@ def render_input() -> None:
         tiers = _quick_pick_tiers()
         with st.container(horizontal=True, gap="small"):
             for label in pipeline.quick_pick_labels():
-                if st.button(label, key=f"qp_{label}", icon=TIER_STYLES[tiers[label]].icon):
+                tier = tiers[label]
+                if tier is None:  # fixture not recorded yet (scripts/record_all.py)
+                    st.button(label, key=f"qp_{label}", icon=":material/hourglass_empty:",
+                              disabled=True, help="Not recorded yet.")
+                elif st.button(label, key=f"qp_{label}", icon=TIER_STYLES[tier].icon):
                     run_quick_pick(label)
 
 
@@ -392,6 +414,11 @@ def render_verdict(result) -> None:
                     st.badge("Low extraction confidence", icon=":material/warning:", color="orange")
                 if result.llm_input_truncated:
                     st.badge("Input truncated", icon=":material/content_cut:", color="gray")
+                if result.schema_version < pipeline.SCHEMA_VERSION:
+                    st.badge("Recorded with an older schema", icon=":material/history_toggle_off:",
+                             color="gray",
+                             help="Recorded before the schema v2 fields existed; those fields "
+                             "show their absent-signal defaults, not extracted values.")
             origin_text = {
                 "fixture": "recorded example (no live API call)",
                 "cached": "cached result (no new API call)",
@@ -453,12 +480,11 @@ def render_facts(result) -> None:
         )
     rows = [
         {
-            "Field": f.name,
-            "Value": _value_str(getattr(facts, f.name)),
-            "Evidence": facts.evidence_snippets.get(f.name, ""),
+            "Field": name,
+            "Value": _value_str(getattr(facts, name)),
+            "Evidence": facts.evidence_snippets.get(name, ""),
         }
-        for f in fields(facts)
-        if f.name != "evidence_snippets"
+        for name in pipeline.DISPLAY_ORDER
     ]
     st.dataframe(
         rows,

@@ -28,7 +28,9 @@ TIERS = {
     "High-Risk": ("high", "High-risk system", ":material/warning:"),
     "Limited-Risk": ("limited", "Limited-risk system", ":material/info:"),
     "Minimal-Risk": ("minimal", "Minimal-risk system", ":material/check_circle:"),
+    "Out of scope": ("out-of-scope", "Outside the AI Act's scope", ":material/do_not_disturb_on:"),
 }
+MILITARY_PICK = "Military drone target recognition (sample text)"
 QUICK_PICKS = [
     ("Classroom emotion tracker (sample text)", "Prohibited", 3),
     ("Face recognition library", "High-Risk", 6),
@@ -167,10 +169,47 @@ def test_quick_pick_buttons_carry_their_tier_icon():
         assert at.button(key=f"qp_{label}").proto.icon == TIERS[tier][2]
 
 
-def test_quick_picks_cover_all_four_tiers():
-    tiers = {pipeline.analyze_quick_pick(label).classification.tier.value
-             for label in pipeline.quick_pick_labels()}
-    assert tiers == set(TIERS)
+def test_quick_picks_cover_every_tier():
+    """All five tiers once the Out-of-scope sample is recorded; the four Act tiers before."""
+    recorded = [label for label in pipeline.quick_pick_labels()
+                if pipeline.quick_pick_status(label) != "not_recorded"]
+    tiers = {pipeline.analyze_quick_pick(label).classification.tier.value for label in recorded}
+    expected = set(TIERS) if MILITARY_PICK in recorded else set(TIERS) - {"Out of scope"}
+    assert tiers == expected
+
+
+def test_out_of_scope_quick_pick_is_disabled_until_recorded():
+    at = run_app()
+    button = at.button(key=f"qp_{MILITARY_PICK}")
+    if pipeline.quick_pick_status(MILITARY_PICK) == "not_recorded":
+        assert button.disabled and button.proto.help == "Not recorded yet."
+    else:
+        assert not button.disabled
+        button.click().run()
+        assert banner_tier(at) == "Out of scope"
+
+
+def test_out_of_scope_banner_from_live_analysis(monkeypatch):
+    counting_fake(monkeypatch, json.dumps({**VALID, "military_defence_use": True,
+                                           "evidence_snippets": {"military_defence_use": "defence only"}}))
+    at = paste(run_app(), "Targeting module used only by a defence ministry.")
+    assert not at.exception
+    assert banner_tier(at) == "Out of scope"
+    assert "aa-verdict--out-of-scope" in banner(at)
+    assert banner_label(at) == "Outside the AI Act's scope"
+    assert "Art. 2(3)" in banner(at)
+    table = rule_table_rows(at)
+    assert table.loc[table["This result"] == DECIDED, "Order"].tolist() == [0]
+    # Principle flags are still shown for out-of-scope systems.
+    assert any(m.value == "##### Documentation gaps" for m in at.markdown)
+
+
+def test_older_schema_fixture_is_badged():
+    at = run_app()
+    at.button(key="qp_HTTP utility library").click().run()
+    older = pipeline.quick_pick_status("HTTP utility library") == "older_schema"
+    assert (":gray-badge[:material/history_toggle_off: Recorded with an older schema]"
+            in all_text(at)) is older
 
 
 # --- Results -----------------------------------------------------------------------
@@ -179,7 +218,9 @@ def test_quick_picks_cover_all_four_tiers():
 def test_quick_picks_render_from_fixtures(label, tier, rule):
     at = run_app()
     at.button(key=f"qp_{label}").click().run()
-    assert not at.exception and not at.warning
+    assert not at.exception
+    # The only warning a recorded example may show is the low-confidence finding (§9).
+    assert all(alert_title(w) == "Low extraction confidence" for w in at.warning)
     assert banner_tier(at) == tier
     css_class, banner_text, _ = TIERS[tier]
     assert f"aa-verdict--{css_class}" in banner(at)
@@ -192,7 +233,7 @@ def test_quick_picks_render_from_fixtures(label, tier, rule):
     assert any(m.value.startswith("**Provision:**") for m in at.markdown)
     assert any(m.value == "##### Documentation gaps" for m in at.markdown)
     assert any("recorded example (no live API call)" in c.value for c in at.caption)
-    assert len(at.dataframe[0].value) == 12
+    assert len(at.dataframe[0].value) == len(pipeline.DISPLAY_ORDER)
 
 
 def test_justification_and_provision_are_separate_lines():
@@ -234,7 +275,7 @@ def test_rule_table_tab_lists_every_rule_in_order():
     at.button(key="qp_Classroom emotion tracker (sample text)").click().run()
     table = rule_table_rows(at)
     expected = pipeline.rule_table()
-    assert table["Order"].tolist() == [r["number"] for r in expected] == list(range(1, 9))
+    assert table["Order"].tolist() == [r["number"] for r in expected] == list(range(0, 9))
     assert table["Applies when"].tolist() == [r["condition"] for r in expected]
     assert table["Tier"].tolist() == [r["tier"] for r in expected]
     assert table["Provision"].tolist() == [r["provision"] for r in expected]
@@ -297,7 +338,7 @@ def _theme_colours(block: str, prop: str) -> tuple[str, str]:
     return plain, plain
 
 
-@pytest.mark.parametrize("css_class", ["prohibited", "high", "limited", "minimal"])
+@pytest.mark.parametrize("css_class", ["prohibited", "high", "limited", "minimal", "out-of-scope"])
 def test_banner_colours_meet_wcag_aa_in_both_themes(css_class):
     source = (ROOT / "app.py").read_text()
     block = re.search(rf"\.aa-verdict--{css_class} \{{(.*?)\}}", source, re.S).group(1)
@@ -567,8 +608,10 @@ def test_fallback_model_caption(monkeypatch):
     assert any(c.value.startswith(":orange[:material/warning: A fallback model answered]") for c in at.caption)
 
 
-def test_primary_model_has_no_fallback_caption():
-    at = run_app()
-    at.button(key="qp_Résumé parser (hiring)").click().run()  # recorded on gemini-3.8-flash
+def test_primary_model_has_no_fallback_caption(monkeypatch):
+    # A live (fake) call the primary model answers; independent of which model
+    # happened to answer when each fixture was recorded.
+    counting_fake(monkeypatch, json.dumps(VALID))
+    at = paste(run_app(), "HireBot ranks job applicants automatically.")
     assert any(c.value == "Extracted by **gemini-3.8-flash**" for c in at.caption)
     assert not any("fallback model answered" in c.value for c in at.caption)

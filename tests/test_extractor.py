@@ -30,6 +30,16 @@ VALID = {
     "transparency_mentioned": False,
     "extraction_confidence": "high",
     "evidence_snippets": {"deployment_domain": "ranks job applicants", "social_scoring": ""},
+    "target_variable": "",
+    "target_type": "unknown",
+    "generates_synthetic_media": False,
+    "synthetic_media_types": [],
+    "impersonation_capable": False,
+    "output_marking_mentioned": False,
+    "consent_safeguards_mentioned": False,
+    "military_defence_use": False,
+    "robustness_testing_mentioned": False,
+    "failsafe_mentioned": False,
 }
 
 
@@ -266,3 +276,51 @@ def test_other_400s_are_not_treated_as_bad_keys():
     with pytest.raises(ExtractionAPIError) as exc_info:
         extract_facts("text", client=FakeClient(bad_request))
     assert not isinstance(exc_info.value, InvalidAPIKeyError)
+
+
+# --- Schema v2 in the extractor (experiment tabs) ------------------------------------
+
+def test_response_schema_includes_v2_fields():
+    props = RESPONSE_SCHEMA["properties"]
+    assert props["synthetic_media_types"] == {
+        "type": "array", "items": {"type": "string", "enum": ["image", "audio", "video", "text"]},
+    }
+    assert props["target_type"]["enum"][-1] == "unknown"
+    assert props["target_variable"]["maxLength"] == 200
+    assert "military_defence_use" in RESPONSE_SCHEMA["required"]
+
+
+def test_v2_values_parse_and_keep_their_snippets():
+    raw = {**VALID, "generates_synthetic_media": True, "synthetic_media_types": ["audio"],
+           "impersonation_capable": True, "target_type": "cost_or_spending",
+           "target_variable": "next year's healthcare costs",
+           "evidence_snippets": {"deployment_domain": "ranks job applicants",
+                                 "impersonation_capable": "clones a voice from 5 seconds",
+                                 "military_defence_use": "n/a"}}  # false == default: dropped
+    facts = extract_facts("text", client=FakeClient(json.dumps(raw)))
+    assert facts.impersonation_capable is True
+    assert facts.target_variable == "next year's healthcare costs"
+    assert set(facts.evidence_snippets) == {"deployment_domain", "impersonation_capable"}
+
+
+def test_prompt_defines_v2_fields_and_scopes_the_confidence_rule():
+    from extractor import SYSTEM_INSTRUCTION
+    for name in ("target_variable", "target_type", "generates_synthetic_media",
+                 "synthetic_media_types", "impersonation_capable", "output_marking_mentioned",
+                 "consent_safeguards_mentioned", "military_defence_use",
+                 "robustness_testing_mentioned", "failsafe_mentioned"):
+        assert f"- {name}:" in SYSTEM_INSTRUCTION, name
+    assert "exclusively for military" in SYSTEM_INSTRUCTION  # mirrors Art. 2(3)
+    assert "does not by itself lower\nextraction_confidence" in SYSTEM_INSTRUCTION
+    assert "Do not assess risk, legality, or compliance." in SYSTEM_INSTRUCTION
+
+
+def test_model_override_pins_one_model_without_fallback():
+    from extractor import AllModelsUnavailableError, extract_with_details
+    client = FakeClient(json.dumps(VALID))
+    assert extract_with_details("text", client=client, model="gemini-3.6-flash").model == "gemini-3.6-flash"
+    assert [c["model"] for c in client.models.calls] == ["gemini-3.6-flash"]
+    client = FakeClient(_api_error(429), json.dumps(VALID))
+    with pytest.raises(AllModelsUnavailableError):
+        extract_with_details("text", client=client, model="gemini-3.7-flash")
+    assert len(client.models.calls) == 1

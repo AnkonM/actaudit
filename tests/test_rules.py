@@ -8,6 +8,7 @@ from schema import (
     DeploymentDomain as D,
     ExtractedFacts,
     ExtractionConfidence,
+    TargetType,
 )
 
 BASELINE = dict(
@@ -24,6 +25,17 @@ BASELINE = dict(
     transparency_mentioned=False,
     extraction_confidence=ExtractionConfidence.HIGH,
     evidence_snippets={},
+    # schema v2 fields, at their absent defaults
+    target_variable="",
+    target_type=TargetType.UNKNOWN,
+    generates_synthetic_media=False,
+    synthetic_media_types=(),
+    impersonation_capable=False,
+    output_marking_mentioned=False,
+    consent_safeguards_mentioned=False,
+    military_defence_use=False,
+    robustness_testing_mentioned=False,
+    failsafe_mentioned=False,
 )
 
 
@@ -116,7 +128,7 @@ def test_default_rule_justification():
 
 
 def test_rule_table_structure():
-    assert [r.number for r in RULES] == list(range(1, 9))
+    assert [r.number for r in RULES] == list(range(0, 9))  # Rule 0 (Art. 2(3)) first
     assert RULES[-1].trigger_fields == ()
     assert all(r.citation_verified is True for r in RULES)
 
@@ -132,3 +144,97 @@ def test_condition_text_mirrors_blueprint_rule_table():
     assert [int(n) for n, _ in rows] == [r.number for r in RULES]
     for (number, condition), rule in zip(rows, RULES):
         assert rule.condition_text == condition.strip("`*"), f"rule {number}"
+
+
+# --- Rule 0 (Art. 2(3)) and classify_with_trace (experiment tabs) --------------------
+
+import itertools  # noqa: E402
+
+from rules import classify_with_trace  # noqa: E402
+
+
+def test_rule_0_out_of_scope_precedes_every_other_rule():
+    # Would otherwise be Prohibited by rule 1 and rule 2.
+    facts = make_facts(military_defence_use=True, social_scoring=True,
+                       real_time_biometric_public=True, deployment_domain=D.LAW_ENFORCEMENT)
+    result = classify(facts)
+    assert result.tier is RiskTier.OUT_OF_SCOPE
+    assert result.rule_number == 0
+    assert result.provision == "EU AI Act Art. 2(3)"
+    assert result.citation_verified is True
+
+
+def test_rule_0_justification_says_the_act_does_not_apply():
+    result = classify(make_facts(military_defence_use=True,
+                                 evidence_snippets={"military_defence_use": "defence ministry only"}))
+    assert result.justification == (
+        "Classified as Out of scope because military_defence_use=true → the EU AI Act does "
+        "not apply to AI systems placed on the market, put into service or used exclusively "
+        "for military, defence or national-security purposes; the UNESCO/IEEE principle "
+        "flags are still shown (see: EU AI Act Art. 2(3))"
+    )
+    assert result.evidence == {"military_defence_use": "defence ministry only"}
+
+
+def test_without_military_use_classification_is_unchanged():
+    for _, overrides, tier, rule_number in CASES:
+        result = classify(make_facts(**overrides, military_defence_use=False))
+        assert (result.tier, result.rule_number) == (tier, rule_number)
+
+
+def test_new_capability_fields_do_not_change_rules_1_to_8():
+    facts = make_facts(generates_synthetic_media=True, impersonation_capable=True,
+                       robustness_testing_mentioned=True, failsafe_mentioned=True,
+                       target_type=TargetType.COST_OR_SPENDING)
+    assert classify(facts).rule_number == 8
+
+
+def _grid():
+    """Every combination of the values the rule conditions test."""
+    domains = list(D)
+    for domain, sens, auton, pop, rtb, social, emotion, bio, mil in itertools.product(
+        domains, list(S), list(A), list(P), *([(False, True)] * 5)
+    ):
+        yield make_facts(deployment_domain=domain, data_sensitivity=sens, decision_autonomy=auton,
+                         affected_population=pop, real_time_biometric_public=rtb,
+                         social_scoring=social, emotion_inference=emotion, biometric_use=bio,
+                         military_defence_use=mil)
+
+
+def test_clauses_agree_with_conditions_on_every_combination():
+    """The trace explains conditions through clauses; they must never disagree."""
+    count = 0
+    for facts in _grid():
+        count += 1
+        for rule in RULES:
+            if rule.clauses:
+                assert all(c.holds(facts) for c in rule.clauses) == rule.condition(facts), rule.number
+    assert count == len(D) * 3 * 3 * 2 * 32
+
+
+def test_clause_text_reproduces_condition_text():
+    for rule in RULES:
+        if rule.clauses:
+            assert " and ".join(c.text for c in rule.clauses) == rule.condition_text
+    assert RULES[-1].clauses == ()  # the default rule always matches
+
+
+def test_trace_lists_every_rule_and_marks_the_decider():
+    facts = make_facts(deployment_domain=D.HIRING, emotion_inference=False)
+    trace = classify_with_trace(facts)
+    assert [e.number for e in trace.entries] == [r.number for r in RULES]
+    assert [e.number for e in trace.entries if e.decided] == [4]
+    assert trace.classification == classify(facts)
+    rule3 = trace.entries[4 - 1 + 0]  # entries start at rule 0
+    assert rule3.number == 3 and not rule3.matched
+    assert [c.text for c in rule3.failed] == ["emotion_inference == true"]
+    assert rule3.clauses[1].holds and rule3.clauses[1].actual == "hiring"
+    default = trace.entries[-1]
+    assert default.matched and not default.decided  # would match, but rule 4 decided first
+
+
+def test_trace_reports_actual_values():
+    trace = classify_with_trace(make_facts(military_defence_use=True))
+    entry = trace.entries[0]
+    assert entry.decided and entry.matched and entry.tier is RiskTier.OUT_OF_SCOPE
+    assert entry.clauses[0].actual == "true"

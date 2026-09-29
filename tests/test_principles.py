@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 
+from pipeline import facts_from_record
 from principles import PRINCIPLES, evaluate_principles
 from schema import (
     AffectedPopulation as P,
@@ -108,7 +109,7 @@ FIXTURES = sorted((Path(__file__).parent / "fixtures").glob("*.json"))
 
 @pytest.mark.parametrize("path", FIXTURES, ids=[p.stem for p in FIXTURES])
 def test_recorded_fixtures_evaluate(path):
-    facts = ExtractedFacts.from_dict(json.loads(path.read_text())["extracted_facts"])
+    facts, _ = facts_from_record(json.loads(path.read_text()))  # upgrades v1 fixtures
     for flag in evaluate_principles(facts):
         assert flag.fired_fields and flag.explanation.endswith(".")
 

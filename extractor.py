@@ -13,15 +13,14 @@ from typing import Any, Sequence
 from google import genai
 from google.genai import errors, types
 
-from schema import (
+from schema import (  # noqa: F401  (ABSENT_DEFAULTS re-exported; it lived here before v2)
+    ABSENT_DEFAULTS,
     BOOL_FIELDS,
-    AffectedPopulation,
-    DataSensitivity,
-    DecisionAutonomy,
-    DeploymentDomain,
     ENUM_FIELDS,
     FIELD_NAMES,
+    LIST_ENUM_FIELDS,
     MAX_PURPOSE_CHARS,
+    MAX_TARGET_CHARS,
     ExtractedFacts,
     SchemaValidationError,
 )
@@ -41,17 +40,6 @@ FALLBACK_STATUS_CODES = frozenset({429, 503, 504})
 REQUEST_TIMEOUT_MS = 60_000
 MAX_INPUT_CHARS = 8000
 TRUNCATION_NOTICE = "\n\n(truncated)"
-
-# Values used when the text has no signal for a field (blueprint §5.1). Lower-risk,
-# except decision_autonomy: human_in_loop is a positive claim that feeds Rule 7
-# (Minimal-Risk), so silence must not produce it.
-ABSENT_DEFAULTS: dict[str, Any] = {
-    "deployment_domain": DeploymentDomain.OTHER,
-    "data_sensitivity": DataSensitivity.NONE,
-    "decision_autonomy": DecisionAutonomy.HUMAN_ON_LOOP,
-    "affected_population": AffectedPopulation.GENERAL_PUBLIC,
-    **{name: False for name in BOOL_FIELDS},
-}
 
 
 class ExtractionError(Exception):
@@ -110,8 +98,16 @@ The defaults for absent information are:
 - decision_autonomy: "human_on_loop" (only use "human_in_loop" when the text says a
   human approves each decision, and quote that text as evidence)
 - affected_population: "general_public"
+- target_variable: "" and target_type: "unknown"
+- synthetic_media_types: [] (an empty list)
 - every boolean field: false
-If several fields had to fall back to these defaults, set extraction_confidence to "low".
+If several of the core fields (deployment_domain, data_sensitivity, decision_autonomy,
+affected_population, biometric_use, emotion_inference, social_scoring,
+real_time_biometric_public, human_oversight_mentioned, transparency_mentioned) had to
+fall back to these defaults, set extraction_confidence to "low". The remaining fields
+(target, synthetic media, military/defence use, robustness testing, fail-safe) are
+often legitimately absent; leaving them at their defaults does not by itself lower
+extraction_confidence.
 
 Field meanings:
 - system_purpose: one-sentence summary of what the system does, at most 200 characters.
@@ -153,6 +149,44 @@ Field meanings:
   override or appeal mechanisms.
 - transparency_mentioned: the documentation mentions telling end users they are
   interacting with an AI system.
+- target_variable: what the system predicts, scores or optimises (its output or
+  training target), quoted or closely paraphrased, at most 200 characters; "" if the
+  text doesn't say.
+- target_type: a factual category for target_variable (categorise what is predicted,
+  not what the prediction is used for):
+  - "cost_or_spending": money spent or costs incurred (e.g. healthcare costs, claim
+    amounts, customer spending).
+  - "arrests_or_police_contact": arrests, charges, police stops or re-arrest.
+  - "engagement_or_clicks": clicks, views, watch time, likes or other engagement.
+  - "past_human_decisions": labels copied from earlier human decisions (e.g. who was
+    hired, admitted, approved or promoted in the past).
+  - "direct_outcome": the outcome of interest itself, measured directly (e.g. whether
+    an X-ray shows a disease, which language a text is in).
+  - "other": a stated target that fits none of these; "unknown": the text doesn't say.
+  Example: "predicts next year's healthcare costs to select patients for a care
+  programme" -> target_variable "next year's healthcare costs", target_type
+  "cost_or_spending".
+- generates_synthetic_media: the system generates or manipulates image, audio, video
+  or text content (e.g. image generation, voice cloning, face swapping, text
+  generation). Classifiers, detectors and parsers that only label existing content
+  -> false.
+- synthetic_media_types: which of "image", "audio", "video", "text" the system
+  generates or manipulates; [] if none.
+- impersonation_capable: the system can reproduce a specific real person's face or
+  voice. Example: "clones a voice from a 5-second sample" or "swaps a face into a
+  video" -> true; generating generic, non-identifiable people or stock images -> false.
+- output_marking_mentioned: the documentation mentions watermarking, labelling,
+  provenance metadata or other marking of generated outputs.
+- consent_safeguards_mentioned: the documentation mentions consent checks, identity
+  verification, or a usage policy that restricts impersonating people.
+- military_defence_use: the system is intended or used exclusively for military,
+  defence or national-security purposes (e.g. built for a defence ministry's weapons
+  or surveillance systems). A general-purpose or dual-use tool that lists defence
+  among other applications -> false.
+- robustness_testing_mentioned: the documentation describes an accuracy, robustness
+  or adversarial evaluation (e.g. accuracy on a benchmark, stress or adversarial tests).
+- failsafe_mentioned: the documentation describes fallback, fail-safe or safe-stop
+  behaviour (e.g. handing control back to an operator when confidence is low).
 - extraction_confidence: how much relevant information the text actually contained.
 - evidence_snippets: for each field you set to a non-default value, a short quote or
   paraphrase of the text that justified it. Omit fields left at their default.
@@ -169,9 +203,15 @@ def _response_schema() -> dict[str, Any]:
     """JSON schema for the Gemini call, generated from schema.py so the two can't drift."""
     properties: dict[str, Any] = {
         "system_purpose": {"type": "string", "maxLength": MAX_PURPOSE_CHARS},
+        "target_variable": {"type": "string", "maxLength": MAX_TARGET_CHARS},
     }
     for name, enum_cls in ENUM_FIELDS.items():
         properties[name] = {"type": "string", "enum": [e.value for e in enum_cls]}
+    for name, enum_cls in LIST_ENUM_FIELDS.items():
+        properties[name] = {
+            "type": "array",
+            "items": {"type": "string", "enum": [e.value for e in enum_cls]},
+        }
     for name in BOOL_FIELDS:
         properties[name] = {"type": "boolean"}
     # Fixed optional keys rather than an open-ended map: structured output handles
@@ -312,9 +352,18 @@ def extract_facts(
 
 
 def extract_with_details(
-    text: str, client: Any = None, models: Sequence[str] = MODEL_CHAIN
+    text: str,
+    client: Any = None,
+    models: Sequence[str] = MODEL_CHAIN,
+    model: str | None = None,
 ) -> ExtractionResult:
-    """As extract_facts, but also returns the accepted raw response and the model used."""
+    """As extract_facts, but also returns the accepted raw response and the model used.
+
+    `model` pins a single model with no fallback (used by scripts/robustness_study.py
+    to compare models); the app never passes it, so its fallback chain is unchanged.
+    """
+    if model is not None:
+        models = (model,)
     if not text or not text.strip():
         raise EmptyInputError("There's no text to analyze. Paste some documentation first.")
     llm_text, _ = prepare_llm_text(text)
