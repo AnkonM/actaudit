@@ -1,0 +1,39 @@
+{
+  "datasets": [
+    {
+      "id": "cost_proxy",
+      "name": "Cost-as-a-proxy demo (synthetic)",
+      "file": "cost_proxy_demo.csv",
+      "synthetic": true,
+      "source": "Synthetic, scripts/make_demo_datasets.py, modelled on Obermeyer et al., Science 366(6464):447-453 (2019), https://doi.org/10.1126/science.aax2342",
+      "licence": "CC0 (generated for this project)",
+      "note": "SYNTHETIC: 4,000 patients, seed 2019. Groups A and B have the same distribution of true need; at equal need group B's recorded cost is 30% lower (unequal access). predicted_cost comes from a linear regression on age, prior-year cost and insurance type; the top 20% by predicted cost are selected_by_cost, the top 20% by true need are high_need.",
+      "protected": [
+        "group"
+      ],
+      "label": "high_need",
+      "positive_label": "Yes",
+      "prediction": "selected_by_cost",
+      "need_column": "true_need_score",
+      "cost_column": "predicted_cost",
+      "rows": 4000
+    },
+    {
+      "id": "adult",
+      "name": "UCI Adult income (6,000-row sample)",
+      "file": "adult_demo.csv",
+      "synthetic": false,
+      "source": "Becker & Kohavi (1996), Adult, UCI Machine Learning Repository, https://doi.org/10.24432/C5XW20",
+      "licence": "CC BY 4.0",
+      "note": "Random sample of 6,000 of the 32,561 rows of UCI Adult (adult.data), seed 42; '?' read as missing; fnlwgt dropped. predicted_income: out-of-fold (5-fold) logistic regression that does not see sex or race, seed 0.",
+      "protected": [
+        "sex",
+        "race"
+      ],
+      "label": "income",
+      "positive_label": ">50K",
+      "prediction": "predicted_income",
+      "rows": 6000
+    }
+  ]
+}

@@ -15,7 +15,7 @@ from typing import Any, Literal
 
 import requests
 
-from analysis import config, harms  # noqa: F401  (re-exported for the UI)
+from analysis import config, data_bias, fairness, harms, proxy, whatif  # noqa: F401  (re-exported for the UI)
 from examples.quick_picks import EXAMPLE_SETS, QUICK_PICKS  # noqa: F401
 from extractor import (  # noqa: F401  (error types re-exported for the UI)
     MAX_INPUT_CHARS,
@@ -51,7 +51,17 @@ from rules import (  # noqa: F401
     classify,
     classify_with_trace,
 )
-from schema import DISPLAY_ORDER, SCHEMA_VERSION, ExtractedFacts, upgrade_facts_dict  # noqa: F401
+from schema import (  # noqa: F401  (field types re-exported for the what-if explorer)
+    BOOL_FIELDS,
+    DISPLAY_ORDER,
+    ENUM_FIELDS,
+    LIST_ENUM_FIELDS,
+    MAX_PURPOSE_CHARS,
+    MAX_TARGET_CHARS,
+    SCHEMA_VERSION,
+    ExtractedFacts,
+    upgrade_facts_dict,
+)
 
 FIXTURE_DIR = Path(__file__).resolve().parent / "tests" / "fixtures"
 

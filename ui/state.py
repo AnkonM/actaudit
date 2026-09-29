@@ -26,6 +26,7 @@ class DatasetState:
     label: str | None = None
     positive_label: Any = None
     prediction: str | None = None
+    meta: dict = field(default_factory=dict)  # demo manifest entry (e.g. need/cost columns)
 
 
 def init_state() -> None:
