@@ -65,7 +65,7 @@ REPOS = [
     # Tab 3 (synthetic media) examples
     ("https://github.com/CorentinJ/Real-Time-Voice-Cloning", "synthetic media: voice cloning", "other or general_consumer; generates audio, impersonation"),
     ("https://github.com/deepfakes/faceswap", "synthetic media: face swapping", "other or general_consumer; generates image/video, impersonation"),
-    ("https://github.com/huggingface/pytorch-image-models", "non-generative image classification models", "other; no synthetic media"),
+    ("https://github.com/lukemelas/EfficientNet-PyTorch", "non-generative image classifier (EfficientNet)", "other; no synthetic media"),
 ]
 
 # Fictional pasted-text descriptions, added so the quick-picks cover every tier

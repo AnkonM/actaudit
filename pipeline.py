@@ -15,7 +15,17 @@ from typing import Any, Literal
 
 import requests
 
-from analysis import config, data_bias, fairness, harms, proxy, whatif  # noqa: F401  (re-exported for the UI)
+from analysis import (  # noqa: F401  (re-exported for the UI)
+    autonomy,
+    config,
+    data_bias,
+    fairness,
+    harms,
+    impact_assessment,
+    proxy,
+    synthetic_media,
+    whatif,
+)
 from examples.quick_picks import EXAMPLE_SETS, QUICK_PICKS  # noqa: F401
 from extractor import (  # noqa: F401  (error types re-exported for the UI)
     MAX_INPUT_CHARS,

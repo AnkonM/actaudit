@@ -22,7 +22,7 @@ EXAMPLE_SETS: dict[str, list[tuple[str, str]]] = {
     "synthetic_media": [
         ("Real-time voice cloning", "CorentinJ__Real-Time-Voice-Cloning"),
         ("Face-swap toolkit", "deepfakes__faceswap"),
-        ("Image classification models (non-generative)", "huggingface__pytorch-image-models"),
+        ("EfficientNet image classifier (non-generative)", "lukemelas__EfficientNet-PyTorch"),
     ],
     "autonomy": [
         ("Military drone target recognition (sample text)", "text__military_target_recognition"),

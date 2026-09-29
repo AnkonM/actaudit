@@ -385,7 +385,9 @@ actaudit/
   - Recording (1) continued: tab_grouping_extension re-recorded on v2 (Minimal-Risk, rule 7, unchanged); then all models returned 429 (daily quota). Still pending: CheXNet, military_target_recognition
 - [x] **Phase 12** — Tabs 2, 4, 5 (shared dataset state), bundled demo datasets + generation scripts, statistics modules, what-if explorer
   - Done: `scripts/make_demo_datasets.py` (reproducible: byte-identical on rerun) → `data/adult_demo.csv` (UCI Adult sample + out-of-fold `predicted_income`), `data/cost_proxy_demo.csv` (synthetic Obermeyer-style: equal need, group B's cost 30% lower; selection by cost picks 27.8% of A vs 12.2% of B), `data/datasets.json`, `data/README.md`. Modules `analysis/data_bias.py`, `proxy.py`, `fairness.py` (fairlearn 0.14.0), `whatif.py`, each unit-tested on hand-computed values. UI: shared dataset picker (`ui/datasets.py`), Tabs 2, 4 and 5, chart helpers (`ui/charts.py`, palette validated with the dataviz validator). New pinned deps: pandas, numpy, altair, scikit-learn, scipy, fairlearn
-- [ ] **Phase 13** — Tab 3 + examples, Tab 6 + Markdown/PDF downloads, Tab 7 section A; then recording priority (2)
+- [x] **Phase 13** — Tab 3 + examples, Tab 6 + Markdown/PDF downloads, Tab 7 section A; then recording priority (2)
+  - Done: `analysis/synthetic_media.py` (Art. 50(2) / 50(4) determinations, misuse matrix + scoring table, ethical analysis), `analysis/impact_assessment.py` (Art. 27(1)(a)–(f) elements, applicability note, project-defined impact level I–IV, action rules, Markdown + PDF via fpdf2), `analysis/autonomy.py` (Rule 0 scope, autonomy, Art. 14/15 documentation checks); UI Tabs 3, 6 and 7A (7B shows "not recorded yet"). Art. 3(60), 9(1), 14, 15, 27(1), 50, 113 and GDPR Art. 35 verified against the Official Journal texts (CELLAR)
+  - Recording (2): not started — daily quota exhausted (429 on every model) until 00:00 PDT. Pending: CorentinJ/Real-Time-Voice-Cloning, deepfakes/faceswap, lukemelas/EfficientNet-PyTorch (plus CheXNet and the military sample from (1))
 - [ ] **Phase 14** — Tab 8 Case Library; then recording priority (3)
 - [ ] **Phase 15** — Robustness study script + Tab 7 section B; then recording priority (4)
 - [ ] **Phase 16** — Final verification, screenshots, deployment check, hand-off report
@@ -439,6 +441,14 @@ Decisions made during Phases 9–16 without the project owner, one line each (re
 - The Adult prediction model excludes `sex` and `race`, so its disparities arise through proxies (Tab 4 finds `relationship`), which is the point of the demo. `fnlwgt` (a census sampling weight) is dropped.
 - Charts use `alt.Step` band heights: in Streamlit 1.64, `st.altair_chart` sizes to the chart's content and ignores a fixed `properties(height=...)` (verified in a browser probe). Status metrics hide the delta arrow, since the delta text is a status, not a change.
 - In AppTests, the tabs widget's state isn't resent after a click (a browser does resend it), so tests re-select the tab before each interaction.
+- The non-generative Tab 3 example is lukemelas/EfficientNet-PyTorch instead of huggingface/pytorch-image-models: the latter's README opens with a long changelog and its introduction starts at character 11,815, beyond the 8,000-character window the model sees.
+- Art. 50 determinations use three statuses. Art. 50(2) "Applies" whenever synthetic content generation is extracted. Art. 50(4) first subparagraph "Applies" for image/audio/video generation by an impersonation-capable system (its output can be a deep fake per Art. 3(60)), "May apply" for image/audio/video generation without it. Art. 50(4) second subparagraph "May apply" for text generation. The exceptions are listed, not modelled.
+- Misuse matrix scoring (project heuristic): capability rows × number of distinct safeguard facts documented (0 / 1 / 2) → High/Medium/Low per the table shown in the UI; overall = highest row.
+- Art. 27(1)(b) (period and frequency of use) has no extraction field, so it is always "Not determinable from documentation", except that real-time use in public spaces is reported when extracted.
+- Impact level (project-defined, inspired by Canada's AIA): additive points for domain, data, affected population, autonomy and capabilities, minus 1 per documented mitigation (oversight, transparency, robustness testing, fail-safe); bands I 0–2, II 3–5, III 6–8, IV 9+; a Prohibited tier is forced to IV.
+- Recommended actions come from a fixed rule table; each cites a verified provision (EU AI Act or GDPR Art. 35, verified via CELLAR) or is labelled a project heuristic.
+- The PDF report uses fpdf2 core fonts: common symbols are transliterated (→, —, quotes), other non-latin-1 characters become "?". Text is written with plain cells (no markup mode), and the Markdown report escapes every value.
+- Tab 7A's note on meaningful human control is labelled a context note, not a legal citation.
 
 ## 15. Experiment tabs (Phases 9–16)
 
