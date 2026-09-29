@@ -315,10 +315,10 @@ actaudit/
   - Note: Streamlit Cloud added `.devcontainer/devcontainer.json` (Codespaces only; its image uses Python 3.11 while the project pins 3.12)
 
 ### Phase 8 — Report & Submission Materials
-- [ ] Write methodology section: the extraction/rules split (Section 1.1), citing this as the core ethical design decision
-- [ ] Document known limitations honestly (Section 9)
-- [ ] Screenshots / short demo recording
-- [ ] Finalize rule-table citations against actual EU AI Act text (do not submit with placeholder/unverified article numbers)
+- [x] Write methodology section: the extraction/rules split (Section 1.1), citing this as the core ethical design decision — `docs/REPORT.md` (problem statement, design decision, methodology, results on the 12 fixtures, ethical framing, limitations, citation status, references)
+- [x] Document known limitations honestly (Section 9) — report §6, README Limitations
+- [x] Screenshots / short demo recording — `docs/screenshots/` (6 screenshots from the recorded quick-picks, light and dark), embedded in the README and report Appendix A. No video recorded
+- [x] Finalize rule-table citations against actual EU AI Act text (do not submit with placeholder/unverified article numbers) — EU AI Act and IEEE verified; UNESCO paragraph numbers still pending (Section 14), stated as such in report §7
 
 ### Stretch goals (only after Phase 7 is fully done — do not start these early)
 - [ ] PDF export of a given result

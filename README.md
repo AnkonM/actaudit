@@ -20,8 +20,13 @@ This split means the unreliable part (reading messy text) is limited to producin
 
 ## Screenshots
 
-<!-- Add screenshots here: idle page, a result for each tier (Prohibited, High-Risk,
-     Limited-Risk, Minimal-Risk), the rule table tab, and dark mode. -->
+| High-Risk result | Prohibited result (dark theme) |
+|---|---|
+| ![High-Risk result for a résumé parser](docs/screenshots/high_risk.png) | ![Prohibited result for a classroom emotion tracker](docs/screenshots/prohibited_dark.png) |
+| **Principles tab** | **Rule table tab** |
+| ![Principle flags split into stated facts and documentation gaps](docs/screenshots/principles_tab.png) | ![Ordered rule table with the deciding rule marked](docs/screenshots/rule_table_tab.png) |
+
+More screenshots, plus the full methodology, results and ethical framing, are in the course report: [`docs/REPORT.md`](docs/REPORT.md).
 
 ## Run it locally
 
@@ -105,7 +110,7 @@ rules.py          the ordered rule table and evaluator
 principles.py     UNESCO / IEEE principle flags
 examples/         quick-pick examples (served from tests/fixtures/)
 tests/            offline test suite, plus recorded fixtures
-docs/             project blueprint (design decisions and rationale)
+docs/             project blueprint, course report, screenshots
 ```
 
 The full design rationale is in [`docs/ActAudit_Project_Blueprint.md`](docs/ActAudit_Project_Blueprint.md).
