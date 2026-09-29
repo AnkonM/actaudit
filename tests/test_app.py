@@ -261,8 +261,9 @@ def test_result_layout_verdict_then_tabs(monkeypatch):
     counting_fake(monkeypatch, json.dumps(VALID))
     at = paste(run_app(), "HireBot ranks job applicants automatically.")
     assert at.get_by_key("verdict") is not None
-    assert [h.value for h in at.subheader] == ["Why this tier"]
-    assert [t.label for t in at.tabs] == [
+    assert [h.value for h in at.subheader] == ["Why this tier", "Ethical analysis"]
+    result_tabs = [t.label for t in at.tabs if t.label.startswith(":material/")]  # not the 8 main tabs
+    assert result_tabs == [
         ":material/verified_user: Principles (3)",
         ":material/table_rows: Extracted facts",
         ":material/rule: Rule table",
@@ -340,7 +341,7 @@ def _theme_colours(block: str, prop: str) -> tuple[str, str]:
 
 @pytest.mark.parametrize("css_class", ["prohibited", "high", "limited", "minimal", "out-of-scope"])
 def test_banner_colours_meet_wcag_aa_in_both_themes(css_class):
-    source = (ROOT / "app.py").read_text()
+    source = (ROOT / "ui" / "components.py").read_text()  # the VERDICT CSS block
     block = re.search(rf"\.aa-verdict--{css_class} \{{(.*?)\}}", source, re.S).group(1)
     fills = _theme_colours(block, "background")
     texts = _theme_colours(block, "color")

@@ -15,7 +15,8 @@ from typing import Any, Literal
 
 import requests
 
-from examples.quick_picks import QUICK_PICKS
+from analysis import config, harms  # noqa: F401  (re-exported for the UI)
+from examples.quick_picks import EXAMPLE_SETS, QUICK_PICKS  # noqa: F401
 from extractor import (  # noqa: F401  (error types re-exported for the UI)
     MAX_INPUT_CHARS,
     MODEL_CHAIN,
