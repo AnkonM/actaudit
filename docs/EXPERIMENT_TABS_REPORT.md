@@ -13,11 +13,11 @@ Resume from this log and the blueprint alone. Each phase ends with one commit an
 | 11 — UI restructure + Tab 1 | done | 59cad67 | 242 passed, 1 skipped. Eight lazy tabs with verbatim captions; Tab 1 migrated + ethical analysis; tab_grouping re-recorded. Quota exhausted (429 on all models). |
 | 12 — Tabs 2, 4, 5 + datasets | done | 4091339 | 289 passed, 1 skipped. Demo datasets reproducible; fairlearn used; browser-checked (chart height fix). |
 | 13 — Tabs 3, 6, 7A; recording (2) | done (recording pending) | a5b26fc | 323 passed, 1 skipped. Browser-checked in dark mode. Recording (2) blocked by daily quota. |
-| 14 — Tab 8; recording (3) | done (recording pending) | (this commit) | 7 sourced cases; 350 passed, 1 skipped. Recording (3) blocked by daily quota. |
-| 15 — Robustness study + Tab 7B; recording (4) | next | | |
-| 16 — Final verification + hand-off | pending | | |
+| 14 — Tab 8; recording (3) | done (recording pending) | f02e141 | 7 sourced cases; 342 passed, 1 skipped. Recording (3) blocked by daily quota. |
+| 15 — Robustness study + Tab 7B; recording (4) | done (recording pending) | (this commit) | 356 passed, 1 skipped. Study script tested with a model-aware fake client. |
+| 16 — Final verification + hand-off | next | | |
 
-**Pending recording:** (1) quick-picks CheXNet, military_target_recognition; (2) synthetic-media examples (Real-Time-Voice-Cloning, faceswap, EfficientNet-PyTorch) — all blocked by the daily quota (resets 00:00 PDT); (3) Case Library (7 `text__case_*` fixtures); (4) robustness study. Single command: `python scripts/record_all.py`.
+**Pending recording:** (1) quick-picks CheXNet, military_target_recognition; (2) synthetic-media examples (Real-Time-Voice-Cloning, faceswap, EfficientNet-PyTorch) — all blocked by the daily quota (resets 00:00 PDT); (3) Case Library (7 `text__case_*` fixtures); (4) robustness study (38 runs). Single command: `python scripts/record_all.py`.
 
 ## Decision log
 

@@ -24,6 +24,7 @@ from analysis import (  # noqa: F401  (re-exported for the UI)
     harms,
     impact_assessment,
     proxy,
+    robustness,
     synthetic_media,
     whatif,
 )
