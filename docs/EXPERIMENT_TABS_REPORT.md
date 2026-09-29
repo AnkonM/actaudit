@@ -12,12 +12,12 @@ Resume from this log and the blueprint alone. Each phase ends with one commit an
 | 10 — Schema v2, Rule 0, trace, fixture compat; recording (1) | done | 625be6a | 213 passed, 1 skipped. Art. 2(3), 3(60), 10, 14, 15, 27, 50, 113 verified against the OJ text (CELLAR). Recording (1) partial: 4 of 7 quick-picks on v2 (tiers unchanged). |
 | 11 — UI restructure + Tab 1 | done | 59cad67 | 242 passed, 1 skipped. Eight lazy tabs with verbatim captions; Tab 1 migrated + ethical analysis; tab_grouping re-recorded. Quota exhausted (429 on all models). |
 | 12 — Tabs 2, 4, 5 + datasets | done | 4091339 | 289 passed, 1 skipped. Demo datasets reproducible; fairlearn used; browser-checked (chart height fix). |
-| 13 — Tabs 3, 6, 7A; recording (2) | done (recording pending) | (this commit) | 323 passed, 1 skipped. Browser-checked in dark mode. Recording (2) blocked by daily quota. |
-| 14 — Tab 8; recording (3) | next | | |
-| 15 — Robustness study + Tab 7B; recording (4) | pending | | |
+| 13 — Tabs 3, 6, 7A; recording (2) | done (recording pending) | a5b26fc | 323 passed, 1 skipped. Browser-checked in dark mode. Recording (2) blocked by daily quota. |
+| 14 — Tab 8; recording (3) | done (recording pending) | (this commit) | 7 sourced cases; 350 passed, 1 skipped. Recording (3) blocked by daily quota. |
+| 15 — Robustness study + Tab 7B; recording (4) | next | | |
 | 16 — Final verification + hand-off | pending | | |
 
-**Pending recording:** (1) quick-picks CheXNet, military_target_recognition; (2) synthetic-media examples (Real-Time-Voice-Cloning, faceswap, EfficientNet-PyTorch) — all blocked by the daily quota (resets 00:00 PDT); (3) Case Library; (4) robustness study. Single command: `python scripts/record_all.py`.
+**Pending recording:** (1) quick-picks CheXNet, military_target_recognition; (2) synthetic-media examples (Real-Time-Voice-Cloning, faceswap, EfficientNet-PyTorch) — all blocked by the daily quota (resets 00:00 PDT); (3) Case Library (7 `text__case_*` fixtures); (4) robustness study. Single command: `python scripts/record_all.py`.
 
 ## Decision log
 

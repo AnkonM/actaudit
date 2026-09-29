@@ -1,0 +1,218 @@
+{
+  "schema": "cases.schema.json",
+  "accessed": "2026-09-29",
+  "cases": [
+    {
+      "id": "compas",
+      "title": "COMPAS recidivism risk scores",
+      "date": "2016-05",
+      "jurisdiction": "United States (Broward County, Florida; Wisconsin)",
+      "fixture": "text__case_compas",
+      "system_description": "COMPAS is a commercial risk-assessment tool sold to US courts and corrections agencies. For each defendant it combines answers to a questionnaire with information pulled from criminal records, 137 items in total, and produces risk scores from 1 to 10 for general recidivism and for violent recidivism, meaning the likelihood of being charged with a new crime within two years. The questions cover criminal history, family background, friends, residence, employment and attitudes; race is not one of the questions. The scores are included in pre-trial and pre-sentence reports that judges and probation officers read when deciding on bail, sentencing and supervision, and each defendant is labelled low, medium or high risk. The calculation is proprietary, so defendants cannot see how their score was computed.",
+      "what_happened": "ProPublica analysed the scores of more than 7,000 people arrested in Broward County, Florida, in 2013 and 2014. Among defendants who did not reoffend within two years, Black defendants were labelled higher risk almost twice as often as white defendants (44.9% vs 23.5%); among those who did reoffend, white defendants were more often labelled lower risk (47.7% vs 28.0%).",
+      "harm": "Unequal error rates in a score that informs bail and sentencing: people wrongly labelled high risk can face harsher decisions about their liberty (an allocative harm), and defendants cannot contest a proprietary calculation.",
+      "what_followed": "In State v. Loomis (2016), the Wisconsin Supreme Court allowed judges to consider COMPAS scores at sentencing, but required a written advisement about the tool's limitations to accompany reports that contain them. The tool was not banned.",
+      "sources": [
+        {
+          "title": "Machine Bias (Angwin, Larson, Mattu & Kirchner, 23 May 2016)",
+          "publisher": "ProPublica",
+          "url": "https://www.propublica.org/article/machine-bias-risk-assessments-in-criminal-sentencing",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "State v. Loomis: Wisconsin Supreme Court requires warning before use of algorithmic risk assessments in sentencing, 130 Harv. L. Rev. 1530 (2017)",
+          "publisher": "Harvard Law Review",
+          "url": "https://harvardlawreview.org/print/vol-130/state-v-loomis/",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "The vendor (Northpointe, now Equivant) disputed ProPublica's analysis; this dispute is widely reported but was not checked against a primary source here."
+      ]
+    },
+    {
+      "id": "amazon_recruiting",
+      "title": "Amazon's experimental résumé-screening tool",
+      "date": "2018-10",
+      "jurisdiction": "United States",
+      "fixture": "text__case_amazon_recruiting",
+      "system_description": "An experimental recruiting tool built by Amazon's machine-learning team from 2014 to review job applicants' résumés automatically and pick out the most promising candidates. The models were trained on patterns in résumés submitted to the company over a ten-year period. For each applicant, the tool read the résumé, including education, work history, skills and activities, and gave the candidate a score from one to five stars, much as shoppers rate products. The scores were meant to let recruiters shortlist the top applicants for software-developer and other technical jobs without reading every résumé. The tool ranked applicants automatically; recruiters could look at its recommendations when deciding whom to interview. It processed personal data about job applicants.",
+      "what_happened": "Because most résumés in the training data came from men, the system taught itself that male candidates were preferable: it penalised résumés containing the word “women's” (as in “women's chess club captain”) and downgraded graduates of two all-women's colleges.",
+      "harm": "Discrimination against women applicants learned from historical data (an allocative harm): the model reproduced the male skew of past applications and hires.",
+      "what_followed": "Amazon edited the programs to be neutral to those terms, but could not guarantee the model would not find other ways to discriminate; the team was disbanded and the project abandoned.",
+      "sources": [
+        {
+          "title": "Amazon scraps secret AI recruiting tool that showed bias against women (Dastin, 10 October 2018)",
+          "publisher": "Reuters",
+          "url": "https://www.reuters.com/article/us-amazon-com-jobs-automation-insight-idUSKCN1MK08G",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "Amazon ditched AI recruiting tool that favored men for technical jobs (10 October 2018)",
+          "publisher": "The Guardian",
+          "url": "https://www.theguardian.com/technology/2018/oct/10/amazon-hiring-ai-gender-bias-recruiting-engine",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "The Reuters URL itself could not be fetched automatically (Reuters blocks automated access); its content was confirmed through the Guardian's syndicated copy and other republications.",
+        "Whether recruiters ever relied on the rankings in real hiring decisions (Amazon said they were not used to evaluate candidates) was not confirmed in a source checked here.",
+        "That recruiters could look at the tool's recommendations is a neutral reconstruction of the reported set-up, not a quoted fact."
+      ]
+    },
+    {
+      "id": "obermeyer_care_management",
+      "title": "Hospital care-management algorithm (cost as a proxy for need)",
+      "date": "2019-10",
+      "jurisdiction": "United States",
+      "fixture": "text__case_obermeyer_care_management",
+      "system_description": "A commercial risk-prediction algorithm used by US health systems and insurers to decide which patients to offer a high-risk care-management programme, which provides extra nursing, primary-care visits and care coordination for people with complex health needs. For every enrolled patient, the algorithm uses the previous year's insurance claims, including diagnoses, procedures, prescriptions and costs, to predict the patient's total healthcare costs over the coming year. Patients are ranked by this predicted cost: those with the highest scores are automatically identified for enrolment, and others near the top are referred to their doctors for consideration. Race is not an input to the model. The scores are produced for large patient populations each year, and programme staff use the ranked lists to fill a limited number of places.",
+      "what_happened": "Obermeyer and colleagues found that, at the same risk score, Black patients were considerably sicker than white patients. Because less money is spent on Black patients with the same level of need, predicting cost made them look healthier than they were, so fewer of them were selected for extra care.",
+      "harm": "Unequal access to extra care (an allocative harm) caused by a proxy target: cost under-measured the need of patients who face barriers to care.",
+      "what_followed": "New York's Department of Financial Services and Department of Health wrote to UnitedHealth Group on 25 October 2019, naming Optum's Impact Pro, and asked it to show the algorithm was not discriminatory or stop using it. Re-targeting the algorithm on health measures rather than cost reduced the measured bias by about 84%, as the researchers reported.",
+      "sources": [
+        {
+          "title": "Dissecting racial bias in an algorithm used to manage the health of populations (Obermeyer, Powers, Vogeli & Mullainathan), Science 366(6464):447-453",
+          "publisher": "Science",
+          "url": "https://doi.org/10.1126/science.aax2342",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "DFS and DOH joint letter to UnitedHealth Group (25 October 2019)",
+          "publisher": "New York State Department of Financial Services",
+          "url": "https://www.dfs.ny.gov/reports-and-publications/comment-letters/dfs-doh-joint-letter-uhgi-20191025",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "Racial bias in widely used hospital algorithm, study finds",
+          "publisher": "PBS NewsHour",
+          "url": "https://www.pbs.org/newshour/show/racial-bias-in-widely-used-hospital-algorithm-study-finds",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "The paper's own text could not be fetched automatically (the publisher blocks automated access); its findings are cited as reported by the New York regulators' letter and PBS.",
+        "The study did not name the vendor; the attribution to Optum's Impact Pro comes from the New York regulators' letter."
+      ]
+    },
+    {
+      "id": "clearview_ai",
+      "title": "Clearview AI facial-recognition search",
+      "date": "2020-01",
+      "jurisdiction": "United States; European Union",
+      "fixture": "text__case_clearview_ai",
+      "system_description": "Clearview AI offers a facial-recognition search service to law-enforcement and government agencies. The company automatically collects photos of faces from publicly accessible websites and social media and has built a database of billions of images. For every face it computes a unique biometric code. An investigator uploads a photo of an unknown person, for example a still from a camera, and the system returns matching photos from the database with links to the web pages where they were found, so the person can be identified. The people whose photos are collected are not told and are not asked for consent. The service is accessed through a web application and is used in criminal investigations. Each search compares the uploaded face against every face in the database.",
+      "what_happened": "Regulators found that Clearview built its database of billions of faces, including those of EU residents, without a legal basis and without telling the people concerned, and did not respond adequately to requests to access their data.",
+      "harm": "Mass processing of biometric data without consent (a privacy harm) and the loss of anonymity for anyone whose photo appears online.",
+      "what_followed": "In May 2022 a US court approved a settlement in ACLU v. Clearview AI that permanently bans Clearview from making its faceprint database available to most private entities nationwide. On 3 September 2024 the Dutch Data Protection Authority fined Clearview €30.5 million and ordered it to stop the violations, with penalties of up to more than €5 million for non-compliance.",
+      "sources": [
+        {
+          "title": "Dutch DPA imposes a fine on Clearview because of illegal data collection for facial recognition (3 September 2024)",
+          "publisher": "Autoriteit Persoonsgegevens (Dutch Data Protection Authority)",
+          "url": "https://www.autoriteitpersoonsgegevens.nl/en/current/dutch-dpa-imposes-a-fine-on-clearview-because-of-illegal-data-collection-for-facial-recognition",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "ACLU v. Clearview AI (case page; consent order of 11 May 2022)",
+          "publisher": "American Civil Liberties Union",
+          "url": "https://www.aclu.org/cases/aclu-v-clearview-ai",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "Data protection authorities in Italy, Greece and France each reportedly fined Clearview €20 million in 2022; this was found in secondary reporting only and not checked against those authorities' decisions."
+      ]
+    },
+    {
+      "id": "dutch_childcare_benefits",
+      "title": "Dutch childcare-benefit fraud risk classification",
+      "date": "2020-12",
+      "jurisdiction": "Netherlands",
+      "fixture": "text__case_dutch_childcare_benefits",
+      "system_description": "The Dutch Tax and Customs Administration used an automated risk-classification system to check applications for childcare benefit, a public benefit that helps working parents pay for childcare. The system scored each application for the risk that it was inaccurate or fraudulent, using characteristics of the applicant and the application as indicators; one indicator was whether the applicant had Dutch nationality. Applications with high risk scores were automatically selected for closer checks by civil servants, who could stop the benefit and order parents to repay what they had received. The administration also kept records of applicants' dual nationality. Parents were not told how the system worked or why their application had been selected. Many applicants were families on low incomes.",
+      "what_happened": "Tens of thousands of parents were wrongly accused of fraud and ordered to repay benefits, driving many into debt. Applicants' nationality was used as a risk indicator, and parents from ethnic minorities were disproportionately affected.",
+      "harm": "Discriminatory profiling in access to a public benefit (allocative and dignity harms), with severe financial consequences and no effective way to contest the selection.",
+      "what_followed": "The Dutch government resigned over the scandal in January 2021. In December 2021 the Dutch Data Protection Authority fined the Tax Administration €2.75 million for processing applicants' (dual) nationality in an unlawful, discriminatory and improper way, including using nationality as an indicator in a system that automatically designated applications as risky.",
+      "sources": [
+        {
+          "title": "Tax Administration fined for discriminatory and unlawful data processing (7 December 2021)",
+          "publisher": "Autoriteit Persoonsgegevens (Dutch Data Protection Authority)",
+          "url": "https://www.autoriteitpersoonsgegevens.nl/en/current/tax-administration-fined-for-discriminatory-and-unlawful-data-processing",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "Xenophobic machines: Discrimination through unregulated use of algorithms in the Dutch childcare benefits scandal (25 October 2021)",
+          "publisher": "Amnesty International",
+          "url": "https://www.amnesty.org/en/documents/eur35/4686/2021/en/",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "Dutch government resigns over child benefits scandal (15 January 2021)",
+          "publisher": "The Guardian",
+          "url": "https://www.theguardian.com/world/2021/jan/15/dutch-government-resigns-over-child-benefits-scandal",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "The description's statement that parents were not told how the system worked summarises Amnesty International's findings on the lack of transparency; it was not checked against the Tax Administration's own documentation."
+      ]
+    },
+    {
+      "id": "arup_deepfake_call",
+      "title": "Deepfake video-call fraud against Arup",
+      "date": "2024-01",
+      "jurisdiction": "Hong Kong",
+      "fixture": "text__case_arup_deepfake_call",
+      "system_description": "A set of AI tools that generates live video and voice of specific real people for use in a multi-person video conference. Starting from publicly available video and audio of the people to be imitated, the tools create synthetic faces and voices that look and sound like them, and render several of these synthetic participants into the same call. The operator decides what each synthetic participant says, and viewers see and hear what appear to be colleagues speaking in real time. The generated video and audio carry no watermark, label or other marking, and the people being imitated have not agreed to it. The tools run without any identity checks or usage restrictions, and the output is shown directly to the other people on the call.",
+      "what_happened": "In January 2024 a finance employee in Arup's Hong Kong office joined a video call with what appeared to be the company's UK-based chief financial officer and other colleagues, all deepfake re-creations, and was instructed to make 15 transfers totalling HK$200 million (about US$25.6 million).",
+      "harm": "Financial fraud through impersonation of real people (a dignity and security harm), and erosion of trust in video calls as proof of identity.",
+      "what_followed": "Arup notified Hong Kong police in January 2024 and in May 2024 confirmed that fake voices and images were used, adding that its financial stability and internal systems were not affected. The police investigation was ongoing at the time of reporting.",
+      "sources": [
+        {
+          "title": "Finance worker pays out $25 million after video call with deepfake 'chief financial officer' (4 February 2024)",
+          "publisher": "CNN",
+          "url": "https://edition.cnn.com/2024/02/04/asia/deepfake-cfo-scam-hong-kong-intl-hnk/index.html",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "Arup revealed as victim of $25 million deepfake scam involving Hong Kong employee (16 May 2024)",
+          "publisher": "CNN Business",
+          "url": "https://edition.cnn.com/2024/05/16/tech/arup-deepfake-scam-loss-hong-kong-intl-hnk",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "The exact tools the fraudsters used are not public; the system description is a neutral reconstruction from the reported facts (public footage, fake voices and images, a multi-person call)."
+      ]
+    },
+    {
+      "id": "hirevue_facial_analysis",
+      "title": "HireVue's video-interview facial analysis",
+      "date": "2019-11",
+      "jurisdiction": "United States",
+      "fixture": "text__case_hirevue_facial_analysis",
+      "system_description": "HireVue provides video-interview assessments that employers use to screen job candidates. Candidates record answers to interview questions on video through a web or mobile app. An automated assessment then analyses each recording, including what the candidate says, their intonation and their facial expressions, and produces scores for job-related competencies and traits such as cognitive ability, emotional intelligence and social aptitude. Employers receive the scores alongside the videos and use them to rank candidates and decide whom to advance to the next round. The analysis runs automatically on every recorded interview, before any person at the employer watches it. Candidates are told that their interview will be assessed, but not how the scores are calculated.",
+      "what_happened": "In November 2019 the Electronic Privacy Information Center (EPIC) filed a complaint with the US Federal Trade Commission arguing that HireVue's assessments, which claimed to measure traits such as emotional intelligence from video, were unproven, invasive and prone to bias.",
+      "harm": "Hiring decisions influenced by inferences about emotions and personality from faces and voices (allocative, quality-of-service and dignity harms), which may disadvantage people whose expressions or speech differ from the training data.",
+      "what_followed": "In January 2021 HireVue announced it had removed the facial-analysis component from its assessments, saying it had stopped using it in March 2020 because it no longer added significant value; analysis of candidates' speech and language continued.",
+      "sources": [
+        {
+          "title": "HireVue stops using facial expressions to assess job candidates amid audit of its A.I. algorithms (19 January 2021)",
+          "publisher": "Fortune",
+          "url": "https://fortune.com/2021/01/19/hirevue-drops-facial-monitoring-amid-a-i-algorithm-audit/",
+          "accessed": "2026-09-29"
+        },
+        {
+          "title": "HireVue Discontinues Facial Analysis Screening",
+          "publisher": "SHRM (Society for Human Resource Management)",
+          "url": "https://www.shrm.org/topics-tools/news/talent-acquisition/hirevue-discontinues-facial-analysis-screening",
+          "accessed": "2026-09-29"
+        }
+      ],
+      "unverified": [
+        "The date and content of EPIC's FTC complaint (November 2019) were confirmed through EPIC's own summary in search results, but EPIC's website blocks automated access, so the complaint was not read directly.",
+        "The description's statements about what candidates are told, and that analysis runs before any person watches the video, are a neutral reconstruction and were not checked against HireVue documentation."
+      ]
+    }
+  ]
+}

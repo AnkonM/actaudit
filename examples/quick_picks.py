@@ -24,6 +24,12 @@ EXAMPLE_SETS: dict[str, list[tuple[str, str]]] = {
         ("Face-swap toolkit", "deepfakes__faceswap"),
         ("EfficientNet image classifier (non-generative)", "lukemelas__EfficientNet-PyTorch"),
     ],
+    # Case Library descriptions whose targets are known proxies (Tab 4A).
+    "proxy": [
+        ("Hospital care-management algorithm (case)", "text__case_obermeyer_care_management"),
+        ("COMPAS recidivism scores (case)", "text__case_compas"),
+        ("Amazon résumé screening (case)", "text__case_amazon_recruiting"),
+    ],
     "autonomy": [
         ("Military drone target recognition (sample text)", "text__military_target_recognition"),
         ("911 dispatch triage", "Vinaya-Sharma__TriageAI"),

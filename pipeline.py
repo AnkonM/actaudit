@@ -17,6 +17,7 @@ import requests
 
 from analysis import (  # noqa: F401  (re-exported for the UI)
     autonomy,
+    case_library,
     config,
     data_bias,
     fairness,

@@ -388,7 +388,9 @@ actaudit/
 - [x] **Phase 13** — Tab 3 + examples, Tab 6 + Markdown/PDF downloads, Tab 7 section A; then recording priority (2)
   - Done: `analysis/synthetic_media.py` (Art. 50(2) / 50(4) determinations, misuse matrix + scoring table, ethical analysis), `analysis/impact_assessment.py` (Art. 27(1)(a)–(f) elements, applicability note, project-defined impact level I–IV, action rules, Markdown + PDF via fpdf2), `analysis/autonomy.py` (Rule 0 scope, autonomy, Art. 14/15 documentation checks); UI Tabs 3, 6 and 7A (7B shows "not recorded yet"). Art. 3(60), 9(1), 14, 15, 27(1), 50, 113 and GDPR Art. 35 verified against the Official Journal texts (CELLAR)
   - Recording (2): not started — daily quota exhausted (429 on every model) until 00:00 PDT. Pending: CorentinJ/Real-Time-Voice-Cloning, deepfakes/faceswap, lukemelas/EfficientNet-PyTorch (plus CheXNet and the military sample from (1))
-- [ ] **Phase 14** — Tab 8 Case Library; then recording priority (3)
+- [x] **Phase 14** — Tab 8 Case Library; then recording priority (3)
+  - Done: `data/cases/cases.json` (7 cases: COMPAS, Amazon recruiting, Obermeyer care-management algorithm, Clearview AI, Dutch childcare benefits, Arup deepfake call, HireVue facial analysis), `cases.schema.json` (documentation), `analysis/case_library.py` (strict validation, rule-generated "Would the AI Act have caught this?"), Tab 8 UI with load-into-other-tabs; Tab 4A examples now point at the three proxy cases. Every fact checked against at least two reachable sources (regulators, courts, CNN, Guardian, ProPublica, Amnesty, Fortune, SHRM, HLR, PBS); anything not checked is in each case's `unverified` list
+  - Recording (3): pending (daily quota) — the 7 `text__case_*` fixtures
 - [ ] **Phase 15** — Robustness study script + Tab 7 section B; then recording priority (4)
 - [ ] **Phase 16** — Final verification, screenshots, deployment check, hand-off report
 
@@ -449,6 +451,9 @@ Decisions made during Phases 9–16 without the project owner, one line each (re
 - Recommended actions come from a fixed rule table; each cites a verified provision (EU AI Act or GDPR Art. 35, verified via CELLAR) or is labelled a project heuristic.
 - The PDF report uses fpdf2 core fonts: common symbols are transliterated (→, —, quotes), other non-latin-1 characters become "?". Text is written with plain cells (no markup mode), and the Markdown report escapes every value.
 - Tab 7A's note on meaningful human control is labelled a context note, not a legal citation.
+- Case Library: all seven candidate incidents could be sourced, so all seven are included. Each case's "system_description" is a neutral reconstruction of the system (not the outcome) from the cited sources; details that go beyond them are listed as unverified. Sources that block automated access (Reuters, science.org, wicourts.gov, EPIC) were replaced or supplemented by reachable reputable ones (the Guardian's copy of the Reuters story, PBS, Harvard Law Review, Fortune/SHRM), and the blocked originals are noted as not fetched.
+- "Would the AI Act have caught this?" is generated from ActAudit's tier (Prohibited → yes; High-Risk → partly, via Art. 9/10/14/15; Limited/Minimal → probably not; Out of scope → no), plus fact-based notes (Art. 50 for synthetic media; ActAudit's rules don't model Art. 5(1)(e) untargeted facial scraping for biometric systems) and a non-retroactivity line (entry into force 1 August 2024, the 20th day after OJ publication on 12 July 2024; most obligations from 2 August 2026; cases dated before August 2024 "predate it").
+- Case text is rendered through `md_escape`, because amounts like "HK$200 million … US$25.6 million" would otherwise be rendered as LaTeX.
 
 ## 15. Experiment tabs (Phases 9–16)
 

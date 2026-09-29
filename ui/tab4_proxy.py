@@ -30,7 +30,7 @@ def _pattern_table() -> None:
 
 def render_target_check() -> None:
     st.subheader("A · Target-label proxy check")
-    examples = pipeline.EXAMPLE_SETS.get("proxy") or None
+    examples = pipeline.EXAMPLE_SETS["proxy"] + list(pipeline.QUICK_PICKS)
     result = require_analysis("t4", examples, source="Tab 4")
     if result is None:
         _pattern_table()

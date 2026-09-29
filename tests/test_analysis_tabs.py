@@ -80,3 +80,39 @@ def test_tab7_out_of_scope_system():
     assert "meaningful human control" in text
     assert text.count("Not required (the Act doesn't apply)") == 3
     assert "robustness study hasn't been recorded yet" in text or "Degradation" in text
+
+
+T8 = "8 · Case Library"
+
+
+def test_tab8_lists_every_case_with_sources_and_unverified_notes():
+    from analysis.case_library import load_cases
+    at = open_tab(T8)
+    assert not at.exception
+    text = texts(at)
+    for c in load_cases():
+        assert at.get_by_key(f"t8_case_{c.id}") is not None
+    assert text.count("**Sources:**") == len(load_cases())
+    assert ":orange-badge[unverified]" in text
+    assert "US\\$25\\.6 million" in text  # dollar signs escaped (no LaTeX)
+
+
+def test_tab8_recorded_case_shows_verdict_and_loads(tmp_path, monkeypatch):
+    import json as _json
+
+    import pipeline
+    from tests.test_extractor import VALID
+    record = {"source_kind": "text", "source_text": "COMPAS description", "model": "gemini-3.8-flash",
+              "schema_version": 2, "raw_model_response": "{}",
+              "extracted_facts": {**VALID, "deployment_domain": "law_enforcement",
+                                  "target_type": "arrests_or_police_contact"}}
+    for f in pipeline.FIXTURE_DIR.glob("*.json"):
+        (tmp_path / f.name).write_text(f.read_text())
+    (tmp_path / "text__case_compas.json").write_text(_json.dumps(record))
+    monkeypatch.setattr(pipeline, "FIXTURE_DIR", tmp_path)
+    at = open_tab(T8)
+    assert "**Would the AI Act have caught this?** Partly" in texts(at)
+    at.session_state["main_tabs"] = T8
+    at.button(key="t8_load_compas").click().run()
+    assert at.session_state["current_analysis"].source_label == "COMPAS recidivism risk scores"
+    assert at.session_state["analysis_source"] == "Case Library"
